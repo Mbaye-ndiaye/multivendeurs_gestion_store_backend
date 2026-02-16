@@ -9,7 +9,7 @@ urlpatterns = [
 
     # Dashboard
     path("", views.home, name="dashboard-home"),
-    path("vendors/", views.vendor_list, name="dashboard-vendors"),
-    path("vendors/add/", views.vendor_create, name="dashboard-vendor-add"),
+    path("vendeurs/", views.vendeur_list, name="dashboard-vendeurs"),
+    path("vendeurs/add/", views.vendeur_create, name="dashboard-vendeur-add"),
 ]
 

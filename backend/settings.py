@@ -24,9 +24,9 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
 STATIC_URL = "/staticfiles/"
 STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
-STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'stripe/'),
-]
+# STATICFILES_DIRS = [
+#     os.path.join(BASE_DIR, 'stripe/'),
+# ]
 env = dotenv_values(".env")
 
 
@@ -44,15 +44,6 @@ ALLOWED_HOSTS = []
 
 # Application definition
 
-# Ancienne configuration INSTALLED_APPS
-# INSTALLED_APPS = [
-#     'django.contrib.admin',
-#     'django.contrib.auth',
-#     'django.contrib.contenttypes',
-#     'django.contrib.sessions',
-#     'django.contrib.messages',
-#     'django.contrib.staticfiles',
-# ]
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -65,6 +56,7 @@ INSTALLED_APPS = [
     'api',
     'dashboard',
     'rest_framework',
+    'rest_framework.authtoken',  # Pour Token Authentication
     'corsheaders',
 ]
 
@@ -79,22 +71,6 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'backend.urls'
-
-# Ancienne configuration TEMPLATES
-# TEMPLATES = [
-#     {
-#         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-#         'DIRS': [],
-#         'APP_DIRS': True,
-#         'OPTIONS': {
-#             'context_processors': [
-#                 'django.template.context_processors.request',
-#                 'django.contrib.auth.context_processors.auth',
-#                 'django.contrib.messages.context_processors.messages',
-#             ],
-#         },
-#     },
-# ]
 
 TEMPLATES = [
     {
@@ -112,6 +88,22 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'backend.wsgi.application'
+
+# Configuration du modèle User personnalisé
+AUTH_USER_MODEL = "api.User"
+
+# Configuration REST Framework
+REST_FRAMEWORK = {
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.IsAuthenticated',
+    ),
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework.authentication.TokenAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+    ),
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 10,
+}
 
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases

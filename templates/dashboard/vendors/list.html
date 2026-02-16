@@ -51,11 +51,11 @@
                                     <div class="d-flex align-items-center">
                                         <div class="avatar-sm me-2">
                                             <div class="avatar-title rounded-circle bg-primary text-white">
-                                                {{ vendor.first_name|first|upper }}{{ vendor.last_name|first|upper }}
+                                                {{ vendor.prenom|first|upper }}{{ vendor.nom|first|upper }}
                                             </div>
                                         </div>
                                         <div>
-                                            <strong>{{ vendor.first_name }} {{ vendor.last_name }}</strong>
+                                            <strong>{{ vendor.prenom }} {{ vendor.nom }}</strong>
                                         </div>
                                     </div>
                                 </td>
@@ -65,10 +65,10 @@
                                 </td>
                                 <td>
                                     <i class="fas fa-phone text-muted me-1"></i>
-                                    {{ vendor.phone|default:"-" }}
+                                    {{ vendor.telephone|default:"-" }}
                                 </td>
                                 <td>
-                                    {{ vendor.shop_name|default:"-" }}
+                                    {{ vendor.nom_de_la_boutique|default:"-" }}
                                 </td>
                                 <td>
                                     {% if vendor.is_active %}
