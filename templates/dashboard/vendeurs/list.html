@@ -1,0 +1,193 @@
+{% extends 'dashboard/base.html' %}
+
+{% block title %}Liste des vendeurs{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="h3 mb-0">
+                    <i class="fas fa-store text-primary me-2"></i>
+                    Liste des vendeurs
+                </h1>
+                <p class="text-muted mt-2">Gérez les vendeurs (boutiques) de la plateforme</p>
+            </div>
+            <a href="{% url 'dashboard-vendeur-add' %}" class="btn btn-primary">
+                <i class="fas fa-plus me-2"></i> Nouveau vendeur
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Statistiques des vendeurs -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-primary shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                            Total Vendeurs</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.total }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-users fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-success shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                            Vendeurs Actifs</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.actifs }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-danger shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                            Vendeurs Bloqués</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.bloques }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-ban fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-info shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                            Vendeurs Inactifs</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.inactifs }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-user-slash fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-list me-2"></i>
+                    Tous les vendeurs ({{ vendeurs.count }})
+                </h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="bg-light">
+                        <tr>
+                            <th class="border-0">Vendeur</th>
+                            <th class="border-0">Email</th>
+                            <th class="border-0">Téléphone</th>
+                            <th class="border-0">Boutique</th>
+                            <th class="border-0">Statut</th>
+                            <th class="border-0">Date de création</th>
+                            <th class="border-0">Actions</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for vendeur in vendeurs %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="avatar-sm me-2">
+                                            <div class="avatar-title rounded-circle bg-primary text-white">
+                                                {{ vendeur.prenom|first|upper }}{{ vendeur.nom|first|upper }}
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <strong>{{ vendeur.prenom }} {{ vendeur.nom }}</strong>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <i class="fas fa-envelope text-muted me-1"></i>
+                                    {{ vendeur.email }}
+                                </td>
+                                <td>
+                                    <i class="fas fa-phone text-muted me-1"></i>
+                                    {{ vendeur.telephone|default:"-" }}
+                                </td>
+                                <td>
+                                    {{ vendeur.nom_de_la_boutique|default:"-" }}
+                                </td>
+                                <td>
+                                    {% if vendeur.is_active %}
+                                        <span class="badge bg-success">
+                                            <i class="fas fa-check-circle me-1"></i>Actif
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-danger">
+                                            <i class="fas fa-ban me-1"></i>Bloqué
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <i class="fas fa-calendar text-muted me-1"></i>
+                                    {{ vendeur.created_at|date:"d/m/Y à H:i" }}
+                                </td>
+                                <td>
+                                    <div class="d-flex gap-2">
+                                        {% if vendeur.is_active %}
+                                            <form method="post" action="#" style="display: inline;">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn btn-sm btn-warning" title="Bloquer">
+                                                    <i class="fas fa-ban"></i>
+                                                </button>
+                                            </form>
+                                        {% else %}
+                                            <form method="post" action="#" style="display: inline;">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn btn-sm btn-success" title="Débloquer">
+                                                    <i class="fas fa-check"></i>
+                                                </button>
+                                            </form>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="7" class="text-center py-5">
+                                    <i class="fas fa-store-slash fa-3x text-muted mb-3 d-block"></i>
+                                    <p class="text-muted">Aucun vendeur pour le moment.</p>
+                                    <a href="{% url 'dashboard-vendeur-add' %}" class="btn btn-primary">
+                                        <i class="fas fa-plus me-2"></i>Ajouter votre premier vendeur
+                                    </a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

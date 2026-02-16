@@ -58,8 +58,19 @@ def logout_view(request):
 def home(request):
     """
     Page d'accueil du dashboard SuperAdmin.
+    Affiche les statistiques des vendeurs.
     """
-    return render(request, "dashboard/home.html")
+    # Statistiques des vendeurs
+    stats_vendeurs = {
+        'total': Vendeur.objects.count(),
+        'actifs': Vendeur.objects.filter(is_active=True).count(),
+        'bloques': Vendeur.objects.filter(is_active=False).count(),
+    }
+    
+    context = {
+        'stats_vendeurs': stats_vendeurs
+    }
+    return render(request, "dashboard/home.html", context)
 
 
 @login_required
@@ -67,9 +78,22 @@ def home(request):
 def vendeur_list(request):
     """
     Liste des vendeurs gérés par le superAdmin.
+    Avec statistiques : total, actifs, bloqués, inactifs.
     """
     vendeurs = Vendeur.objects.all().order_by("-created_at")
-    context = {"vendeurs": vendeurs}
+    
+    # Calcul des statistiques
+    stats = {
+        'total': Vendeur.objects.count(),
+        'actifs': Vendeur.objects.filter(is_active=True).count(),
+        'bloques': Vendeur.objects.filter(is_active=False).count(),
+        'inactifs': Vendeur.objects.filter(is_active=False).count(),
+    }
+    
+    context = {
+        "vendeurs": vendeurs,
+        "stats": stats
+    }
     return render(request, "dashboard/vendeurs/list.html", context)
 
 
