@@ -9,7 +9,11 @@ urlpatterns = [
 
     # Dashboard
     path("", views.home, name="dashboard-home"),
-    path("vendors/", views.vendor_list, name="dashboard-vendors"),
-    path("vendors/add/", views.vendor_create, name="dashboard-vendor-add"),
+    path("vendeurs/", views.vendeur_list, name="dashboard-vendeurs"),
+    path("vendeurs/add/", views.vendeur_create, name="dashboard-vendeur-add"),
+    
+    # Blocage/Déblocage des vendeurs (comme Easymarket)
+    path("vendeurs/bloc/<int:pk>/", views.bloc_vendeur, name="dashboard-vendeur-bloc"),
+    path("vendeurs/debloc/<int:pk>/", views.debloc_vendeur, name="dashboard-vendeur-debloc"),
 ]
 
