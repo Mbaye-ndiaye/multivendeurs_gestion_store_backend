@@ -11,5 +11,9 @@ urlpatterns = [
     path("", views.home, name="dashboard-home"),
     path("vendeurs/", views.vendeur_list, name="dashboard-vendeurs"),
     path("vendeurs/add/", views.vendeur_create, name="dashboard-vendeur-add"),
+    
+    # Blocage/Déblocage des vendeurs (comme Easymarket)
+    path("vendeurs/bloc/<int:pk>/", views.bloc_vendeur, name="dashboard-vendeur-bloc"),
+    path("vendeurs/debloc/<int:pk>/", views.debloc_vendeur, name="dashboard-vendeur-debloc"),
 ]
 

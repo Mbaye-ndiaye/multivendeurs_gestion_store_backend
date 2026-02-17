@@ -1,0 +1,74 @@
+{% extends 'dashboard/base.html' %}
+
+{% block title %}Débloquer un vendeur{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="h3 mb-0">
+                    <i class="fas fa-check-circle text-success me-2"></i>
+                    Débloquer un vendeur
+                </h1>
+                <p class="text-muted mt-2">Confirmez le déblocage de ce vendeur</p>
+            </div>
+            <a href="{% url 'dashboard-vendeurs' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i> Retour à la liste
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-6 offset-lg-3">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-check-circle me-2"></i>
+                    Confirmation de déblocage
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Information :</strong> Êtes-vous sûr de vouloir débloquer le vendeur suivant ?
+                </div>
+                
+                <div class="mb-4">
+                    <h6 class="text-muted mb-2">Informations du vendeur :</h6>
+                    <ul class="list-unstyled">
+                        <li><strong>Nom :</strong> {{ vendeur.prenom }} {{ vendeur.nom }}</li>
+                        <li><strong>Email :</strong> {{ vendeur.email }}</li>
+                        <li><strong>Boutique :</strong> {{ vendeur.nom_de_la_boutique }}</li>
+                        <li><strong>Statut actuel :</strong> 
+                            {% if vendeur.is_active %}
+                                <span class="badge bg-success">Actif</span>
+                            {% else %}
+                                <span class="badge bg-danger">Bloqué</span>
+                            {% endif %}
+                        </li>
+                    </ul>
+                </div>
+                
+                <p class="text-muted">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Le vendeur pourra à nouveau accéder à son compte une fois débloqué.
+                </p>
+                
+                <form action="{% url 'dashboard-vendeur-debloc' vendeur.id %}" method="post">
+                    {% csrf_token %}
+                    <div class="d-flex justify-content-end gap-2 mt-4">
+                        <a href="{% url 'dashboard-vendeurs' %}" class="btn btn-secondary">
+                            <i class="fas fa-times me-2"></i>Annuler
+                        </a>
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-check me-2"></i>Confirmer le déblocage
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

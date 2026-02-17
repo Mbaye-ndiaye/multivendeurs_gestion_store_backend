@@ -30,17 +30,37 @@ def _is_superadmin(user):
 def login_view(request):
     """
     Page de connexion pour accéder au dashboard SuperAdmin.
+    Comme dans Easymarket : utilise email pour l'authentification.
     """
     if request.user.is_authenticated:
         return redirect("dashboard-home")
 
-    form = AuthenticationForm(request, data=request.POST or None)
     if request.method == "POST":
-        if form.is_valid():
-            user = form.get_user()
-            login(request, user)
-            return redirect("dashboard-home")
-
+        email = request.POST.get('username')  # AuthenticationForm utilise 'username' mais mappe vers USERNAME_FIELD
+        password = request.POST.get('password')
+        
+        if email and password:
+            # Authentifier avec email (USERNAME_FIELD = 'email')
+            user = authenticate(request, email=email, password=password)
+            
+            if user is not None:
+                # Vérifier que c'est un admin/superadmin
+                if user.is_superuser or user.user_type in ['admin', 'superadmin']:
+                    # Vérifier si le compte est actif
+                    if not user.is_active:
+                        messages.error(request, 'Votre compte a été bloqué. Veuillez contacter le support.')
+                    else:
+                        login(request, user)
+                        return redirect("dashboard-home")
+                else:
+                    messages.error(request, 'Accès réservé aux administrateurs.')
+            else:
+                messages.error(request, 'Email ou mot de passe incorrect.')
+        else:
+            messages.error(request, 'Veuillez remplir tous les champs.')
+    
+    # Utiliser AuthenticationForm pour le rendu du formulaire
+    form = AuthenticationForm(request, data=request.POST or None)
     return render(request, "dashboard/login.html", {"form": form})
 
 
@@ -157,4 +177,60 @@ def vendeur_create(request):
     # GET : afficher le formulaire
     context = {"form": VendorForm(), "message": message}
     return render(request, "dashboard/vendeurs/create.html", context)
+
+
+@login_required
+@user_passes_test(_is_superadmin)
+def bloc_vendeur(request, pk):
+    """
+    Bloquer un vendeur
+    Met is_active à False.
+    """
+    try:
+        vendeur = Vendeur.objects.get(id=pk)
+        
+        if request.method == "POST":
+            vendeur.is_active = False
+            vendeur.save()
+            
+            # TODO: Envoyer un email de notification
+            # notify.send_email(...)
+            
+            messages.success(request, f'Vendeur {vendeur.nom_de_la_boutique} bloqué avec succès')
+            return redirect("dashboard-vendeurs")
+        
+        context = {"vendeur": vendeur}
+        return render(request, "dashboard/vendeurs/bloc.html", context)
+    
+    except Vendeur.DoesNotExist:
+        messages.error(request, "Vendeur introuvable")
+        return redirect("dashboard-vendeurs")
+
+
+@login_required
+@user_passes_test(_is_superadmin)
+def debloc_vendeur(request, pk):
+    """
+    Débloquer un vendeur.
+    Met is_active à True.
+    """
+    try:
+        vendeur = Vendeur.objects.get(id=pk)
+        
+        if request.method == "POST":
+            vendeur.is_active = True
+            vendeur.save()
+            
+            # TODO: Envoyer un email de notification (comme Easymarket)
+            # notify.send_email(...)
+            
+            messages.success(request, f'Vendeur {vendeur.nom_de_la_boutique} débloqué avec succès')
+            return redirect("dashboard-vendeurs")
+        
+        context = {"vendeur": vendeur}
+        return render(request, "dashboard/vendeurs/debloc.html", context)
+    
+    except Vendeur.DoesNotExist:
+        messages.error(request, "Vendeur introuvable")
+        return redirect("dashboard-vendeurs")
 

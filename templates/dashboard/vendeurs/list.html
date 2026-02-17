@@ -155,19 +155,19 @@
                                 <td>
                                     <div class="d-flex gap-2">
                                         {% if vendeur.is_active %}
-                                            <form method="post" action="#" style="display: inline;">
-                                                {% csrf_token %}
-                                                <button type="submit" class="btn btn-sm btn-warning" title="Bloquer">
-                                                    <i class="fas fa-ban"></i>
-                                                </button>
-                                            </form>
+                                            <a href="{% url 'dashboard-vendeur-bloc' vendeur.id %}" 
+                                               class="btn btn-sm btn-warning" 
+                                               title="Bloquer le vendeur"
+                                               onclick="return confirm('Êtes-vous sûr de vouloir bloquer ce vendeur ?');">
+                                                <i class="fas fa-ban"></i> Bloquer
+                                            </a>
                                         {% else %}
-                                            <form method="post" action="#" style="display: inline;">
-                                                {% csrf_token %}
-                                                <button type="submit" class="btn btn-sm btn-success" title="Débloquer">
-                                                    <i class="fas fa-check"></i>
-                                                </button>
-                                            </form>
+                                            <a href="{% url 'dashboard-vendeur-debloc' vendeur.id %}" 
+                                               class="btn btn-sm btn-success" 
+                                               title="Débloquer le vendeur"
+                                               onclick="return confirm('Êtes-vous sûr de vouloir débloquer ce vendeur ?');">
+                                                <i class="fas fa-check"></i> Débloquer
+                                            </a>
                                         {% endif %}
                                     </div>
                                 </td>
