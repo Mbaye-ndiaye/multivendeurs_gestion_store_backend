@@ -16,7 +16,7 @@ from .forms import VendorForm
 def _is_superadmin(user):
     """
     Vérifie que l'utilisateur est super admin.
-    Comme dans Easymarket : vérifie is_superuser OU user_type == SUPERADMIN ou ADMIN.
+    vérifie is_superuser OU user_type == SUPERADMIN ou ADMIN.
     """
     if not user.is_authenticated:
         return False
@@ -30,7 +30,7 @@ def _is_superadmin(user):
 def login_view(request):
     """
     Page de connexion pour accéder au dashboard SuperAdmin.
-    Comme dans Easymarket : utilise email pour l'authentification.
+    : utilise email pour l'authentification.
     """
     if request.user.is_authenticated:
         return redirect("dashboard-home")
@@ -136,7 +136,7 @@ def vendeur_create(request):
         couleur = request.POST.get('couleur', '')
         domaine = request.POST.get('domaine', '')
         
-        # Génération automatique du mot de passe (comme Easymarket)
+        # Génération automatique du mot de passe
         pwo = PassGen(minlen=8, minuc=1, minlc=1, minnum=1, minsc=1)
         password_ = pwo.generate()
         
@@ -221,7 +221,7 @@ def debloc_vendeur(request, pk):
             vendeur.is_active = True
             vendeur.save()
             
-            # TODO: Envoyer un email de notification (comme Easymarket)
+            # TODO: Envoyer un email de notification
             # notify.send_email(...)
             
             messages.success(request, f'Vendeur {vendeur.nom_de_la_boutique} débloqué avec succès')
