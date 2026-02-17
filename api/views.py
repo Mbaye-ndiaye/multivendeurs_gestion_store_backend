@@ -36,7 +36,7 @@ class VendeurAPIListView(generics.ListCreateAPIView):
         Réservé aux utilisateurs avec user_type == ADMIN ou SUPERADMIN.
         Génère automatiquement un mot de passe et l'envoie par email.
         """
-        # Vérification des permissions (comme dans Easymarket)
+        # Vérification des permissions
         if not (request.user.user_type == ADMIN or request.user.user_type == SUPERADMIN):
             return Response(
                 {"message": "Vous n'êtes pas autorisé à ajouter un vendeur"}, 
@@ -59,7 +59,7 @@ class VendeurAPIListView(generics.ListCreateAPIView):
             vendeur.user_type = VENDEUR
             vendeur.save()
             
-            # TODO: Envoyer un email avec le mot de passe (comme Easymarket)
+            # TODO: Envoyer un email avec le mot de passe
             # notification_after_add_vendeur(vendeur_id, password)
             
             # Retourner les données du vendeur créé (sans le mot de passe)
