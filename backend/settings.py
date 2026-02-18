@@ -19,8 +19,7 @@ load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 # BASE_DIR = Path(__file__).resolve().parent.parent
-# BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
 STATIC_URL = "/staticfiles/"
@@ -109,40 +108,16 @@ REST_FRAMEWORK = {
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.postgresql',
-#         'NAME': env.get('DB_NAME'),
-#         'USER': env.get('DB_USER'),
-#         'PASSWORD': env.get('DB_PASSWORD'),
-#         'HOST': env.get('DB_HOST'),
-#         'PORT': env.get('DB_PORT'),
-#     }
-# }
-
-# Database
-# https://docs.djangoproject.com/en/6.0/ref/settings/#databases
-
-# # Si on est en CI, on utilise SQLite
-if os.environ.get("CI") == "true":
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
-        }
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': env.get('DB_NAME'),
+        'USER': env.get('DB_USER'),
+        'PASSWORD': env.get('DB_PASSWORD'),
+        'HOST': env.get('DB_HOST'),
+        'PORT': env.get('DB_PORT'),
     }
-else:
-    # Sinon PostgreSQL normal
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': env.get('DB_NAME'),
-            'USER': env.get('DB_USER'),
-            'PASSWORD': env.get('DB_PASSWORD'),
-            'HOST': env.get('DB_HOST'),
-            'PORT': env.get('DB_PORT'),
-        }
-    }
+}
 
 
 # Password validation
