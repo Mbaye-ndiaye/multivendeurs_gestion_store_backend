@@ -10,52 +10,34 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
-    services:
-      postgres:
-        image: postgres:15
-        env:
-          POSTGRES_DB: gestion_stock_db
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: 2024
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd="pg_isready -U postgres"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=5
-
     steps:
+      # Checkout du code
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # Setup Python
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
 
+      # Installer les dépendances
       - name: Install dependencies
         run: |
           pip install -r requirements.txt
 
+      # Run migrations
       - name: Run migrations
         env:
           SECRET_KEY: dummy-secret-key
-          DB_NAME: gestion_stock_db
-          DB_USER: postgres
-          DB_PASSWORD: 2024
-          DB_HOST: localhost
-          DB_PORT: 5432
+          CI: "true"
         run: |
           python manage.py migrate
 
+      # Run tests
       - name: Run tests
         env:
           SECRET_KEY: dummy-secret-key
-          DB_NAME: gestion_stock_db
-          DB_USER: postgres
-          DB_PASSWORD: 2024
-          DB_HOST: localhost
-          DB_PORT: 5432
+          CI: "true"
         run: |
           python manage.py test

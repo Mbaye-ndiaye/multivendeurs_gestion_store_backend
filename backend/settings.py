@@ -122,16 +122,26 @@ REST_FRAMEWORK = {
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.environ.get('DB_NAME') or env.get('DB_NAME'),
-        'USER': os.environ.get('DB_USER') or env.get('DB_USER'),
-        'PASSWORD': os.environ.get('DB_PASSWORD') or env.get('DB_PASSWORD'),
-        'HOST': os.environ.get('DB_HOST') or env.get('DB_HOST'),
-        'PORT': os.environ.get('DB_PORT') or env.get('DB_PORT'),
+# # Si on est en CI, on utilise SQLite
+if os.environ.get("CI") == "true":
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',  # fichier SQLite
+        }
     }
-}
+else:
+    # Sinon PostgreSQL normal
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': env.get('DB_NAME'),
+            'USER': env.get('DB_USER'),
+            'PASSWORD': env.get('DB_PASSWORD'),
+            'HOST': env.get('DB_HOST'),
+            'PORT': env.get('DB_PORT'),
+        }
+    }
 
 
 # Password validation
