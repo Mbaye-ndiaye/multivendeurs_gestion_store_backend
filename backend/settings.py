@@ -58,6 +58,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',  # Pour Token Authentication
     'corsheaders',
+    'drf_yasg',  # Pour la documentation Swagger
 ]
 
 MIDDLEWARE = [
