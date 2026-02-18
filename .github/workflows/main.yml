@@ -2,9 +2,9 @@ name: Qualite assurance
 
 on:
   push:
-    branches: [ configuration_docker ]
+    branches: [ main ]
   pull_request:
-    branches: [ configuration_docker ]
+    branches: [ main ]
 
 jobs:
     build:
