@@ -1,0 +1,32 @@
+name: Qualite assurance
+
+on:
+  push:
+    branches: [ configuration_docker ]
+  pull_request:
+    branches: [ configuration_docker ]
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Set up Python
+              uses: actions/setup-python@v5
+              with:
+                python-version: '3.12'
+
+            - name: Install dependencies
+              run: |
+                pip install -r requirements.txt
+
+            - name: Run migrations
+              run: |
+                python manage.py migrate
+
+            - name: Run tests
+              run: |
+                python manage.py test

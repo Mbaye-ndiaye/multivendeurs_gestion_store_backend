@@ -1,0 +1,26 @@
+version: '3..13.7'
+
+services:
+  web:
+    build: .
+
+    # command: python manage.py runserver 0.0.0.0:8000
+    # ports:
+    #   - "8080:8080"
+    # environment:
+    #   - SPRING_PROFILES_ACTIVE=prod
+    # depends_on:
+    #   - db
+
+  db:
+    image: postgres:13
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=myappdb
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+
+    entrypoint: /app/entrypoint.sh
