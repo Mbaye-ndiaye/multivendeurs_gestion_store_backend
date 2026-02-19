@@ -18,8 +18,7 @@ import sys
 load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-# BASE_DIR = Path(__file__).resolve().parent.parent
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+BASE_DIR = Path(__file__).resolve().parent.parent
 
 PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
 STATIC_URL = "/staticfiles/"
@@ -58,11 +57,13 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',  # Pour Token Authentication
     'corsheaders',
+    'drf_yasg',  # Pour la documentation Swagger
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -111,11 +112,11 @@ REST_FRAMEWORK = {
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': env['DB_NAME'],
-        'USER': env['DB_USER'],
-        'PASSWORD': env['DB_PASSWORD'],
-        'HOST': env['DB_HOST'],
-        'PORT': env['DB_PORT'],
+        'NAME': os.environ.get('DB_NAME'),
+        'USER': os.environ.get('DB_USER'),
+        'PASSWORD': os.environ.get('DB_PASSWORD'),
+        'HOST': os.environ.get('DB_HOST'),
+        'PORT': os.environ.get('DB_PORT'),
     }
 }
 
