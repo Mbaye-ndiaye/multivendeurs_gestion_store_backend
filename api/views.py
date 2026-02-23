@@ -6,6 +6,7 @@ from easy_password_generator import PassGen
 
 from api.models import *
 from api.serializers import *
+from api.email_utils import send_vendeur_credentials
 
 
 class VendeurAPIListView(generics.ListCreateAPIView):
@@ -52,24 +53,22 @@ class VendeurAPIListView(generics.ListCreateAPIView):
         if serializer.is_valid():
             # Création du vendeur
             vendeur = serializer.save()
-            vendeur_id = vendeur.id
             
             # Définir le mot de passe et le type d'utilisateur
             vendeur.password = make_password(password)
             vendeur.user_type = VENDEUR
             vendeur.save()
             
-            # TODO: Envoyer un email avec le mot de passe
-            # notification_after_add_vendeur(vendeur_id, password)
+            # Envoi des identifiants par email
+            send_vendeur_credentials(vendeur, password)
             
             # Retourner les données du vendeur créé (sans le mot de passe)
             response_serializer = VendeurGetSerializer(vendeur)
             return Response(
                 {
                     **response_serializer.data,
-                    "message": "Vendeur créé avec succès",
-                    "password_generated": password  # À retirer en production
-                }, 
+                    "message": "Vendeur créé avec succès. Les identifiants ont été envoyés par email."
+                },
                 status=status.HTTP_201_CREATED
             )
         

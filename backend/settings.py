@@ -156,3 +156,18 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+
+# Email (identifiants vendeur, etc.)
+# Si EMAIL_HOST est défini → envoi réel (ex. Gmail). Sinon → console (affichage dans le terminal).
+_email_host = os.environ.get('EMAIL_HOST', '')
+EMAIL_BACKEND = (
+    'django.core.mail.backends.smtp.EmailBackend'
+    if _email_host
+    else 'django.core.mail.backends.console.EmailBackend'
+)
+EMAIL_HOST = _email_host
+EMAIL_PORT = int(os.environ.get('EMAIL_PORT') or 587)
+EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'true').lower() == 'true'
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'noreply@gestio-stock.local')

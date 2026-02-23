@@ -10,6 +10,7 @@ from django.utils import timezone
 from easy_password_generator import PassGen
 
 from api.models import *
+from api.email_utils import send_vendeur_credentials
 from .forms import VendorForm
 
 
@@ -160,8 +161,11 @@ def vendeur_create(request):
                 domaine=domaine if domaine else None,
             )
             
-            # Pour l'instant, on affiche juste un message de succès
-            messages.success(request, f'Vendeur ajouté avec succès. Mot de passe généré: {password_}')
+            # Envoi des identifiants par email
+            if send_vendeur_credentials(vendeur, password_):
+                messages.success(request, 'Vendeur ajouté avec succès. Les identifiants ont été envoyés par email.')
+            else:
+                messages.warning(request, 'Vendeur ajouté, mais l\'envoi de l\'email a échoué. Communiquez les identifiants manuellement.')
             return redirect("dashboard-vendeurs")
             
         except ValidationError as e:
