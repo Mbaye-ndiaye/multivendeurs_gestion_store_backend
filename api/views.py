@@ -2,10 +2,13 @@ from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.contrib.auth.hashers import make_password
+from django.conf import settings
+from django.utils import timezone
 from easy_password_generator import PassGen
 
 from api.models import *
 from api.serializers import *
+from api.notifications import send_email
 
 
 class VendeurAPIListView(generics.ListCreateAPIView):
@@ -58,9 +61,29 @@ class VendeurAPIListView(generics.ListCreateAPIView):
             vendeur.password = make_password(password)
             vendeur.user_type = VENDEUR
             vendeur.save()
-            
-            # TODO: Envoyer un email avec le mot de passe
-            # notification_after_add_vendeur(vendeur_id, password)
+
+            # Envoi de l'email au vendeur avec ses identifiants
+            try:
+                app_name = getattr(settings, 'APP_NAME', 'Gestio-Stock')
+                contenu = (
+                    f"Nous vous informons qu'un compte Vendeur vient d'être créé pour vous "
+                    f"sur la plateforme {app_name}."
+                )
+                subject = "Création de votre compte vendeur - Gestio-Stock"
+                context = {
+                    "nom": vendeur.nom,
+                    "prenom": vendeur.prenom,
+                    "contenu": contenu,
+                    "email": vendeur.email,
+                    "password": password,
+                    "id": "true",
+                    "sujet": subject,
+                    "year": timezone.now().year,
+                    "APP_NAMES": app_name,
+                }
+                send_email(subject, vendeur.email, 'mail_notification.html', context)
+            except Exception:
+                pass  # Ne pas faire échouer la création si l'email échoue
             
             # Retourner les données du vendeur créé (sans le mot de passe)
             response_serializer = VendeurGetSerializer(vendeur)

@@ -2,9 +2,9 @@ name: CI - Qualité assurance
 
 on:
   push:
-    branches: [main]
+    branches: [ recette ]
   pull_request:
-    branches: [main]
+    branches: [ recette ]
 
 jobs:
   build:
