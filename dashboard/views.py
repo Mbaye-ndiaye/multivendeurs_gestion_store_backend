@@ -11,12 +11,14 @@ from easy_password_generator import PassGen
 
 from api.models import *
 from .forms import VendorForm
+from api.notifications import send_email
+from django.conf import settings
 
 
 def _is_superadmin(user):
     """
     Vérifie que l'utilisateur est super admin.
-    Comme dans Easymarket : vérifie is_superuser OU user_type == SUPERADMIN ou ADMIN.
+    vérifie is_superuser OU user_type == SUPERADMIN ou ADMIN.
     """
     if not user.is_authenticated:
         return False
@@ -30,7 +32,7 @@ def _is_superadmin(user):
 def login_view(request):
     """
     Page de connexion pour accéder au dashboard SuperAdmin.
-    Comme dans Easymarket : utilise email pour l'authentification.
+    utilise email pour l'authentification.
     """
     if request.user.is_authenticated:
         return redirect("dashboard-home")
@@ -136,7 +138,7 @@ def vendeur_create(request):
         couleur = request.POST.get('couleur', '')
         domaine = request.POST.get('domaine', '')
         
-        # Génération automatique du mot de passe (comme Easymarket)
+        # Génération automatique du mot de passe
         pwo = PassGen(minlen=8, minuc=1, minlc=1, minnum=1, minsc=1)
         password_ = pwo.generate()
         
@@ -160,8 +162,40 @@ def vendeur_create(request):
                 domaine=domaine if domaine else None,
             )
             
-            # Pour l'instant, on affiche juste un message de succès
-            messages.success(request, f'Vendeur ajouté avec succès. Mot de passe généré: {password_}')
+            # Affichage du mot de passe dans la console (terminal) pour le superAdmin
+            print("\n" + "=" * 60)
+            print("NOUVEAU VENDEUR CRÉÉ - MOT DE PASSE GÉNÉRÉ")
+            print("=" * 60)
+            print(f"Email     : {vendeur.email}")
+            print(f"Boutique  : {vendeur.nom_de_la_boutique}")
+            print(f"Mot de passe : {password_}")
+            print("=" * 60 + "\n")
+
+            # Envoi de l'email au vendeur avec ses identifiants
+            try:
+                app_name = getattr(settings, 'APP_NAME', 'Gestion stock')
+                contenu = (
+                    f"Nous vous informons qu'un compte Vendeur vient d'être créé pour vous "
+                    f"sur la plateforme {app_name}."
+                )
+                subject = "Création de votre compte vendeur - Gestion stock"
+                context = {
+                    "nom": vendeur.nom,
+                    "prenom": vendeur.prenom,
+                    "contenu": contenu,
+                    "email": vendeur.email,
+                    "password": password_,
+                    "id": "true",
+                    "sujet": subject,
+                    "year": timezone.now().year,
+                    "APP_NAMES": app_name,
+                }
+                if send_email(subject, vendeur.email, 'mail_notification.html', context):
+                    messages.success(request, f'Vendeur ajouté avec succès. Un email avec le mot de passe a été envoyé à {vendeur.email}.')
+                else:
+                    messages.success(request, f'Vendeur ajouté avec succès. Mot de passe généré: {password_} (email non envoyé - vérifiez la configuration).')
+            except Exception as e:
+                messages.success(request, f'Vendeur ajouté avec succès. Mot de passe généré: {password_} (email non envoyé: {str(e)})')
             return redirect("dashboard-vendeurs")
             
         except ValidationError as e:
@@ -221,7 +255,7 @@ def debloc_vendeur(request, pk):
             vendeur.is_active = True
             vendeur.save()
             
-            # TODO: Envoyer un email de notification (comme Easymarket)
+            # TODO: Envoyer un email de notification
             # notify.send_email(...)
             
             messages.success(request, f'Vendeur {vendeur.nom_de_la_boutique} débloqué avec succès')
