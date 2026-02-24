@@ -10,6 +10,7 @@ from django.utils import timezone
 from easy_password_generator import PassGen
 
 from api.models import *
+from api.email_utils import send_vendeur_credentials
 from .forms import VendorForm
 from api.notifications import send_email
 from django.conf import settings
@@ -162,40 +163,11 @@ def vendeur_create(request):
                 domaine=domaine if domaine else None,
             )
             
-            # Affichage du mot de passe dans la console (terminal) pour le superAdmin
-            print("\n" + "=" * 60)
-            print("NOUVEAU VENDEUR CRÉÉ - MOT DE PASSE GÉNÉRÉ")
-            print("=" * 60)
-            print(f"Email     : {vendeur.email}")
-            print(f"Boutique  : {vendeur.nom_de_la_boutique}")
-            print(f"Mot de passe : {password_}")
-            print("=" * 60 + "\n")
-
-            # Envoi de l'email au vendeur avec ses identifiants
-            try:
-                app_name = getattr(settings, 'APP_NAME', 'Gestion stock')
-                contenu = (
-                    f"Nous vous informons qu'un compte Vendeur vient d'être créé pour vous "
-                    f"sur la plateforme {app_name}."
-                )
-                subject = "Création de votre compte vendeur - Gestion stock"
-                context = {
-                    "nom": vendeur.nom,
-                    "prenom": vendeur.prenom,
-                    "contenu": contenu,
-                    "email": vendeur.email,
-                    "password": password_,
-                    "id": "true",
-                    "sujet": subject,
-                    "year": timezone.now().year,
-                    "APP_NAMES": app_name,
-                }
-                if send_email(subject, vendeur.email, 'mail_notification.html', context):
-                    messages.success(request, f'Vendeur ajouté avec succès. Un email avec le mot de passe a été envoyé à {vendeur.email}.')
-                else:
-                    messages.success(request, f'Vendeur ajouté avec succès. Mot de passe généré: {password_} (email non envoyé - vérifiez la configuration).')
-            except Exception as e:
-                messages.success(request, f'Vendeur ajouté avec succès. Mot de passe généré: {password_} (email non envoyé: {str(e)})')
+            # Envoi des identifiants par email
+            if send_vendeur_credentials(vendeur, password_):
+                messages.success(request, 'Vendeur ajouté avec succès. Les identifiants ont été envoyés par email.')
+            else:
+                messages.warning(request, 'Vendeur ajouté, mais l\'envoi de l\'email a échoué. Communiquez les identifiants manuellement.')
             return redirect("dashboard-vendeurs")
             
         except ValidationError as e:
