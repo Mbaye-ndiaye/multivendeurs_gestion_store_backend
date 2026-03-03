@@ -4,11 +4,15 @@ from rest_framework.permissions import IsAuthenticated
 from django.contrib.auth.hashers import make_password
 from django.conf import settings
 from django.utils import timezone
+from django.db.models import Q, Sum
+from decimal import Decimal
 from easy_password_generator import PassGen
 
 from api.models import *
 from api.serializers import *
 from api.email_utils import send_vendeur_credentials
+from api.pagination import KgPagination
+from api.images import get_images
 
 
 class VendeurAPIListView(generics.ListCreateAPIView):
@@ -104,3 +108,272 @@ class VendeurAPIView(generics.RetrieveUpdateDestroyAPIView):
             )
         
         return super().delete(request, *args, **kwargs)
+
+
+
+
+class CategorieAPIListView(generics.ListCreateAPIView):
+    """GET /api/categories/ | POST /api/categories/"""
+    queryset = Categorie.objects.all()
+    serializer_class = CategorieSerializer
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, format=None):
+        nom = request.data.get('nom')
+        if nom and Categorie.objects.filter(nom__iexact=nom, is_archived=False).exists():
+            return Response(
+                {"message": "Cette catégorie existe déjà."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        serializer = CategorieSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def get(self, request, format=None):
+        items = Categorie.objects.filter(is_archived=False).order_by('-pk')
+        limit = request.query_params.get('limit')
+        return KgPagination.get_response(limit, items, request, CategorieGetSerializer)
+
+
+class CategorieAPIView(generics.RetrieveAPIView):
+    """GET /api/categorie/<slug>/ | PUT | DELETE"""
+    queryset = Categorie.objects.all()
+    serializer_class = CategorieSerializer
+    permission_classes = [IsAuthenticated]
+    lookup_field = 'slug'
+    lookup_url_kwarg = 'slug'
+
+    def get(self, request, slug, format=None):
+        try:
+            item = Categorie.objects.get(slug=slug)
+            serializer = CategorieGetSerializer(item)
+            return Response(serializer.data)
+        except Categorie.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+    def put(self, request, slug, format=None):
+        try:
+            item = Categorie.objects.get(slug=slug)
+        except Categorie.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        serializer = CategorieSerializer(item, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, slug, format=None):
+        try:
+            item = Categorie.objects.get(slug=slug)
+        except Categorie.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        if Produit.objects.filter(categorie=item, is_archived=False).exists():
+            return Response(
+                {"message": "Vous ne pouvez pas supprimer cette catégorie, des produits y sont liés."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        item.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class CategorieByVendeurAPIListView(generics.ListAPIView):
+    """GET /api/vendeurs/<id>/categories/ — catégories d'un vendeur."""
+    queryset = Categorie.objects.all()
+    serializer_class = CategorieSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, vendeur_id, format=None):
+        items = Categorie.objects.filter(vendeur_id=vendeur_id, is_archived=False).order_by('-pk')
+        limit = request.query_params.get('limit')
+        return KgPagination.get_response(limit, items, request, CategorieGetSerializer)
+
+
+
+
+class ProduitAPIListView(generics.ListCreateAPIView):
+    """POST /api/produits/ — création produit (avec images optionnelles)."""
+    queryset = Produit.objects.all()
+    serializer_class = ProduitSerializer
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, format=None):
+        nom = request.data.get('nom')
+        if nom and Produit.objects.filter(nom__iexact=nom, is_archived=False).exists():
+            return Response(
+                {"message": "Ce nom de produit existe déjà."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        image_ids = []
+        if request.FILES.getlist('images'):
+            image_ids = get_images(request.FILES.getlist('images'))
+        data = request.data.copy()
+        if 'images' in data:
+            del data['images']
+        serializer = ProduitSerializer(data=data)
+        if serializer.is_valid():
+            item = serializer.save()
+            for iid in image_ids:
+                item.images.add(iid)
+            item.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ProduitAPIView(generics.RetrieveAPIView):
+    """GET /api/produits/<slug>/ | PUT | DELETE"""
+    queryset = Produit.objects.all()
+    serializer_class = ProduitSerializer
+    permission_classes = [IsAuthenticated]
+    lookup_field = 'slug'
+    lookup_url_kwarg = 'slug'
+
+    def get(self, request, slug, format=None):
+        try:
+            item = Produit.objects.get(slug=slug)
+            serializer = ProduitGetSerializer(item)
+            return Response(serializer.data)
+        except Produit.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+    def put(self, request, slug, format=None):
+        try:
+            item = Produit.objects.get(slug=slug)
+        except Produit.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        image_ids = []
+        if request.FILES.getlist('images'):
+            image_ids = get_images(request.FILES.getlist('images'))
+        data = request.data.copy()
+        if 'images' in data:
+            del data['images']
+        serializer = ProduitSerializer(item, data=data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            for iid in image_ids:
+                item.images.add(iid)
+            item.save()
+            return Response(ProduitGetSerializer(item).data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, slug, format=None):
+        try:
+            item = Produit.objects.get(slug=slug)
+        except Produit.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        item.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class ProduitByVendeurAPIListView(generics.ListAPIView):
+    """GET /api/vendeurs/<id>/produits/ — produits d'un vendeur (filtres: q, categorie, sous_categorie, prix_min, prix_max, stock)."""
+    queryset = Produit.objects.all()
+    serializer_class = ProduitSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, vendeur_id, format=None):
+        items = Produit.objects.filter(vendeur_id=vendeur_id, is_archived=False).order_by('-pk')
+        q = request.query_params.get('q')
+        categorie = request.query_params.get('categorie')
+        prix_min = request.query_params.get('prix_min')
+        prix_max = request.query_params.get('prix_max')
+        stock = request.query_params.get('stock')
+        if stock == "0":
+            items = items.filter(stock=0)
+        elif stock == "1":
+            items = items.filter(stock__gt=0)
+        if prix_min and prix_max:
+            items = items.filter(prix__gte=prix_min, prix__lte=prix_max)
+        if q:
+            items = items.filter(Q(nom__icontains=q) | Q(description__icontains=q))
+        if categorie:
+            items = items.filter(categorie__slug=categorie)
+        # if sous_categorie:
+        #     slugs = [s.strip() for s in sous_categorie.split(',') if s.strip()]
+            # if slugs:
+            #     items = items.filter(sous_categorie__slug__in=slugs)
+        limit = request.query_params.get('limit')
+        return KgPagination.get_response(limit, items, request, ProduitGetSerializer)
+
+
+
+
+class VariationAPIListView(generics.ListCreateAPIView):
+    """GET /api/variations/ | POST /api/variations/"""
+    queryset = Variation.objects.all()
+    serializer_class = VariationSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, format=None):
+        items = Variation.objects.all().order_by('-pk')
+        limit = request.query_params.get('limit')
+        return KgPagination.get_response(limit, items, request, VariationGetSerializer)
+
+    def post(self, request, format=None):
+        data = request.data.copy()
+        image_ids = []
+        if request.FILES.getlist('images'):
+            image_ids = get_images(request.FILES.getlist('images'))
+        if 'images' in data:
+            del data['images']
+        serializer = VariationSerializer(data=data)
+        if serializer.is_valid():
+            item = serializer.save()
+            for iid in image_ids:
+                item.images.add(iid)
+            item.save()
+            item.produit.variations.add(item)
+            item.produit.stock += Decimal(str(item.quantite))
+            item.produit.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class VariationAPIView(generics.RetrieveAPIView):
+    """GET /api/variations/<slug>/ | PUT | DELETE"""
+    queryset = Variation.objects.all()
+    serializer_class = VariationSerializer
+    permission_classes = [IsAuthenticated]
+    lookup_field = 'slug'
+    lookup_url_kwarg = 'slug'
+
+    def get(self, request, slug, format=None):
+        try:
+            item = Variation.objects.get(slug=slug)
+            serializer = VariationGetSerializer(item)
+            return Response(serializer.data)
+        except Variation.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+    def put(self, request, slug, format=None):
+        try:
+            item = Variation.objects.get(slug=slug)
+        except Variation.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        data = request.data.copy()
+        image_ids = []
+        if request.FILES.getlist('images'):
+            image_ids = get_images(request.FILES.getlist('images'))
+        if 'images' in data:
+            del data['images']
+        serializer = VariationSerializer(item, data=data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            for iid in image_ids:
+                item.images.add(iid)
+            item.save()
+            total_quantite = Variation.objects.filter(produit=item.produit).aggregate(sum_quantite=Sum('quantite'))
+            sum_of_quantite = total_quantite.get('sum_quantite') or Decimal('0')
+            item.produit.stock = sum_of_quantite
+            item.produit.save()
+            return Response(VariationGetSerializer(item).data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, slug, format=None):
+        try:
+            item = Variation.objects.get(slug=slug)
+        except Variation.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        item.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)

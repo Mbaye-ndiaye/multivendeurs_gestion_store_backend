@@ -1,0 +1,20 @@
+{% extends 'dashboard/base.html' %}
+
+{% block title %}Supprimer la catégorie{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <p class="mb-4">Êtes-vous sûr de vouloir supprimer la catégorie <strong>{{ category.nom }}</strong> ?</p>
+                <form action="{% url 'dashboard-category-delete' category.id %}" method="post">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Confirmer la suppression</button>
+                    <a href="{% url 'dashboard-categories' %}" class="btn btn-secondary">Annuler</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
