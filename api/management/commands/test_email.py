@@ -24,15 +24,28 @@ class Command(BaseCommand):
 
         # Afficher la configuration
         self.stdout.write("\n=== Configuration Email actuelle ===\n")
+        use_console = getattr(settings, 'USE_CONSOLE_EMAIL', False)
+        self.stdout.write(f"  Mode            : {'CONSOLE (emails dans le terminal uniquement)' if use_console else 'SMTP (envoi reel)'}")
         self.stdout.write(f"  EMAIL_BACKEND   : {getattr(settings, 'EMAIL_BACKEND', 'N/A')}")
-        self.stdout.write(f"  EMAIL_HOST      : {getattr(settings, 'EMAIL_HOST', 'N/A')}")
+        self.stdout.write(f"  EMAIL_HOST      : {getattr(settings, 'EMAIL_HOST', 'N/A') or '(vide - pas d envoi reel)'}")
         self.stdout.write(f"  EMAIL_PORT      : {getattr(settings, 'EMAIL_PORT', 'N/A')}")
         self.stdout.write(f"  EMAIL_HOST_USER : {getattr(settings, 'EMAIL_HOST_USER', 'N/A') or '(vide)'}")
         pwd = getattr(settings, 'EMAIL_HOST_PASSWORD', '') or ''
         pwd_display = f"{pwd[:4]}****{pwd[-2:]}" if len(pwd) > 6 else "(vide ou trop court)"
         self.stdout.write(f"  EMAIL_HOST_PASS : {pwd_display}\n")
 
-        # Vérifier si configuré
+        # Mode console : pas d'envoi reel
+        if use_console:
+            self.stdout.write(self.style.WARNING(
+                "\n[ATTENTION] EMAIL_HOST est vide - les emails vont uniquement dans la console."
+            ))
+            self.stdout.write("Pour envoyer vers une vraie boite mail, ajoutez dans .env :")
+            self.stdout.write("  EMAIL_HOST=smtp.mailtrap.io   (pour tester)")
+            self.stdout.write("  EMAIL_HOST=smtp.gmail.com     (pour Gmail)")
+            self.stdout.write("  + EMAIL_HOST_USER et EMAIL_HOST_PASSWORD\n")
+            return
+
+        # Vérifier si configuré pour SMTP
         if not getattr(settings, 'EMAIL_HOST_USER', None) or not getattr(settings, 'EMAIL_HOST_PASSWORD', None):
             self.stdout.write(self.style.ERROR(
                 "ERREUR: EMAIL_HOST_USER ou EMAIL_HOST_PASSWORD manquant dans .env"
