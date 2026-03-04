@@ -5,17 +5,20 @@ from django.conf.urls.static import static
 from . import views
 
 urlpatterns = [
+    # authentification
+    path('login/', views.LoginView.as_view()),
+
     # Vendeurs
     path('vendeurs/', views.VendeurAPIListView.as_view(), name='api-vendors-list'),
-    path('vendeurs/<int:id>/', views.VendeurAPIView.as_view(), name='api-vendors-detail'),
-    path('vendeurs/<int:vendeur_id>/categories/', views.CategorieByVendeurAPIListView.as_view(), name='api-vendeur-categories'),
+    path('vendeurs/<slug:slug>/', views.VendeurAPIView.as_view(), name='api-vendors-detail'),
     # Produits par vendeur
     path('vendeurs/<int:vendeur_id>/produits/', views.ProduitByVendeurAPIListView.as_view(), name='api-vendeur-produits'),
     # Catégories globales (list + create, détail par slug)
-    path('categories/', views.CategorieAPIListView.as_view(), name='api-categories-list'),
+    path('vendeur/categories/create/', views.CategorieAPIListView.as_view(), name='api-categories-list'),
+    path('vendeurs/<int:vendeur_id>/categories/', views.CategorieByVendeurAPIListView.as_view(), name='api-vendeur-categories'),
     path('categorie/<slug:slug>/', views.CategorieAPIView.as_view(), name='api-categorie-detail'),
     # Produits (création + détail par slug)
-    path('produits/', views.ProduitAPIListView.as_view(), name='api-produits-list'),
+    path('vendeur/produits/create/', views.ProduitAPIListView.as_view(), name='api-produits-list'),
     path('produits/<slug:slug>/', views.ProduitAPIView.as_view(), name='api-produit-detail'),
     # Variations
     path('variations/', views.VariationAPIListView.as_view(), name='api-variations-list'),

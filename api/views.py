@@ -13,7 +13,67 @@ from api.serializers import *
 from api.email_utils import send_vendeur_credentials
 from api.pagination import KgPagination
 from api.images import get_images
+from rest_framework_tracking.mixins import LoggingMixin, BaseLoggingMixin
+from django.contrib.auth import authenticate, login, logout
+from rest_framework_jwt.settings import api_settings
 
+jwt_payload_handler = api_settings.JWT_PAYLOAD_HANDLER
+jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
+class LoginView(LoggingMixin, generics.CreateAPIView):
+    permission_classes = (
+
+    )
+    queryset = User.objects.all()
+    serializer_class = LoginSerializer
+
+    def post(self, request, *args, **kwargs):
+
+        if 'email' in request.data and request.data['email']:
+            if 'password' in request.data and request.data['password']:
+                try:
+                    email = request.data['email']
+                    if "221" in email and "+221" not in email:
+                        email = "+"+email
+                    search_items = User.objects.filter(
+                        telephone__icontains=email)
+                    if search_items.exists():
+                        item1 = User.objects.get(telephone=email)
+                        if item1:
+                            token = jwt_encode_handler(
+                                jwt_payload_handler(item1))
+                            return Response({'token': token, 'data': UserGetSerializer(item1).data}, status=200)
+
+                    else:
+                        email = request.data['email']
+                        search_item = User.objects.filter(email__iexact=email)
+                        if search_item.exists():
+                            item = search_item.last()
+                            if item and item.email != email:
+                                email = item.email
+                                request.data['email'] = email
+                        item = User.objects.get(email=email)
+                        user = authenticate(
+                            request, email=email, password=request.data['password'])
+
+                        # if item.is_archived:
+                        #     return Response({"message": f"Votre compte a été archivé. Pour plus d'informations, veuillez contacter l'équipe de {APP_NAME}."}, status=400)
+
+                        if item and not item.is_active:
+                            return Response({
+                                "status": "failure",
+                                "message": "Ton compte n'a pas encore activé par l'admin."},
+                                status=401)
+
+                        elif user:
+                            token = jwt_encode_handler(
+                                jwt_payload_handler(user))
+                            return Response({'token': token, 'data': UserGetSerializer(user).data}, status=200)
+
+                        else:
+                            return Response({"message": "Vos identifiants sont incorrects"}, status=400)
+                except User.DoesNotExist:
+                    return Response({"status": "failure", "message": "Ce compte n'existe pas. Veuillez-vous enregistrer"}, status=400)
+            return Response({"message": "Votre mot de passe est requis"}, status=401)
 
 class VendeurAPIListView(generics.ListCreateAPIView):
     """
@@ -90,7 +150,8 @@ class VendeurAPIView(generics.RetrieveUpdateDestroyAPIView):
     """
     queryset = Vendeur.objects.all()
     permission_classes = [IsAuthenticated]
-    lookup_field = 'id'
+    lookup_field = 'slug'
+    lookup_url_kwarg = 'slug'
     
     def get_serializer_class(self):
         if self.request.method in ['PUT', 'PATCH']:

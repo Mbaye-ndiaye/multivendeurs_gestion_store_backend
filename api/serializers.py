@@ -4,6 +4,18 @@ from api.models import *
 
 # --- Vendeur (doit être avant CategorieGetSerializer / ProduitGetSerializer) ---
 
+class LoginSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ('email', 'password')
+
+class UserGetSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = User
+        exclude = (
+            'user_permissions', 'groups', 'is_superuser',
+            'is_staff', 'password')
 
 class VendeurAddSerializer(serializers.ModelSerializer):
     """Serializer pour créer un vendeur via l'API."""
