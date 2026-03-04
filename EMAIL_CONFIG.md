@@ -1,8 +1,15 @@
 # Configuration de l'envoi d'emails - Gestio-Stock
 
+## Important
+
+**Sans `EMAIL_HOST` dans le .env** : les emails s'affichent uniquement dans la console du serveur (terminal).  
+Le vendeur ne reçoit rien dans sa boîte mail. C'est le mode par défaut si la config email n'est pas complète.
+
+**Avec `EMAIL_HOST` configuré** : les emails sont réellement envoyés (Gmail, Mailtrap, etc.).
+
 ## Variables à ajouter dans votre fichier `.env`
 
-Pour activer l'envoi d'emails (notamment le mot de passe aux vendeurs créés), ajoutez les variables suivantes dans votre fichier `.env` à la racine du projet backend :
+Pour que les vendeurs reçoivent les identifiants par email, ajoutez ces variables dans votre `.env` :
 
 ```env
 # Configuration Email (Gmail SMTP)

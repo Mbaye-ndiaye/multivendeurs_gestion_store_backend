@@ -11,6 +11,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 try:
     APP_NAME = getattr(settings, 'APP_NAME', 'Gestion stock')
 except Exception:
