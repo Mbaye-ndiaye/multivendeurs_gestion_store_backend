@@ -9,6 +9,11 @@ class LoginSerializer(serializers.ModelSerializer):
         model = User
         fields = ('email', 'password')
 
+
+class VerifyOTPSerializer(serializers.Serializer):
+    email = serializers.EmailField(required=True)
+    otp = serializers.CharField(max_length=6, min_length=6, required=True)
+
 class UserGetSerializer(serializers.ModelSerializer):
 
     class Meta:
@@ -35,6 +40,12 @@ class VendeurGetSerializer(serializers.ModelSerializer):
             'user_permissions', 'groups', 'is_superuser', 'is_staff', 'password',
         )
 
+class VendeurSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Vendeur
+        exclude = (
+            'user_permissions', 'groups', 'is_superuser', 'is_staff', 'password')
 
 
 
@@ -128,5 +139,9 @@ class VariationGetSerializer(serializers.ModelSerializer):
         model = Variation
         fields = '__all__'
 
+# class OrderItemSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = OrderItem
+#         fields = '__all__'
 
 # (VendeurAddSerializer / VendeurGetSerializer définis en tête de fichier)

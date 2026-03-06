@@ -158,29 +158,18 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
-# Email (identifiants vendeur, etc.)
-# Si EMAIL_HOST est défini → envoi réel (ex. Gmail). Sinon → console (affichage dans le terminal).
-# _email_host = os.environ.get('EMAIL_HOST', '')
-# EMAIL_BACKEND = (
-#     'django.core.mail.backends.smtp.EmailBackend'
-#     if _email_host
-#     else 'django.core.mail.backends.console.EmailBackend'
-# )
-# EMAIL_HOST = _email_host
-# EMAIL_PORT = int(os.environ.get('EMAIL_PORT') or 587)
-# EMAIL_USE_TLS = True
-# EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
-# EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
-# DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'noreply@gestio-stock.local')
-# Comme Easymarket : tout fixe sauf le mot de passe
+# --- Configuration email (alignée sur backend_easymarket_multivendor) ---
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_USE_TLS = True
 EMAIL_PORT = 587
 EMAIL_HOST_USER = 'noreply.babacarndiay546@gmail.com'
-# EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
 EMAIL_USE_SSL = False
 EMAIL_TIMEOUT = 20
-# print("EMAIL PASSWORD:", os.environ.get("EMAIL_HOST_PASSWORD"))
-# print(os.environ.get("EMAIL_HOST_PASSWORD"))
+EMAIL_SSL_KEYFILE = None
+EMAIL_SSL_CERTFILE = None
+APP_NAME = os.environ.get('APP_NAME')
+# Si True : pas d'envoi SMTP, message affiché dans la console (dev)
+USE_CONSOLE_EMAIL = os.environ.get('USE_CONSOLE_EMAIL', '').lower() in ('1', 'true', 'yes')
+EMAIL_TIMEOUT = 20

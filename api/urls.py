@@ -7,6 +7,7 @@ from . import views
 urlpatterns = [
     # authentification
     path('login/', views.LoginView.as_view()),
+    path('verify-otp/', views.VerifyOTPView.as_view()),
 
     # Vendeurs
     path('vendeurs/', views.VendeurAPIListView.as_view(), name='api-vendors-list'),

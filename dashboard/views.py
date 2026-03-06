@@ -12,7 +12,6 @@ from easy_password_generator import PassGen
 from api.models import *
 from api.email_utils import send_vendeur_credentials
 from .forms import VendorForm, CategorieForm, ProduitForm
-from api.notifications import send_email
 from django.conf import settings
 
 

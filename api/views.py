@@ -5,20 +5,34 @@ from django.contrib.auth.hashers import make_password
 from django.conf import settings
 from django.utils import timezone
 from django.db.models import Q, Sum
+from datetime import timedelta
+import random
 from decimal import Decimal
 from easy_password_generator import PassGen
 
 from api.models import *
 from api.serializers import *
-from api.email_utils import send_vendeur_credentials
+from api.email_utils import send_vendeur_credentials, send_otp_email
 from api.pagination import KgPagination
 from api.images import get_images
 from rest_framework_tracking.mixins import LoggingMixin, BaseLoggingMixin
 from django.contrib.auth import authenticate, login, logout
 from rest_framework_jwt.settings import api_settings
+from api.utils import Utils
+from django.utils.decorators import method_decorator
+
 
 jwt_payload_handler = api_settings.JWT_PAYLOAD_HANDLER
 jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
+
+
+class TranslatedErrorResponse(Response):
+    def __init__(self, serializer_errors, status=None, template_name=None, headers=None, content_type=None):
+        translated_errors = Utils.translate_errors_array(serializer_errors)
+        super().__init__(translated_errors, status=status,
+                         template_name=template_name, headers=headers, content_type=content_type)
+
+
 class LoginView(LoggingMixin, generics.CreateAPIView):
     permission_classes = (
 
@@ -65,15 +79,59 @@ class LoginView(LoggingMixin, generics.CreateAPIView):
                                 status=401)
 
                         elif user:
-                            token = jwt_encode_handler(
-                                jwt_payload_handler(user))
-                            return Response({'token': token, 'data': UserGetSerializer(user).data}, status=200)
+                            # --- OTP par email : on ne renvoie plus le token ici ---
+                            # token = jwt_encode_handler(
+                            #     jwt_payload_handler(user))
+                            # return Response({'token': token, 'data': UserGetSerializer(user).data}, status=200)
+                            code = ''.join([str(random.randint(0, 9)) for _ in range(6)])
+                            expires_at = timezone.now() + timedelta(minutes=5)
+                            LoginOTP.objects.create(user=user, code=code, expires_at=expires_at)
+                            if send_otp_email(user, code):
+                                return Response({
+                                    'message': "Un code OTP a été envoyé à votre adresse email. Saisissez-le pour terminer la connexion.",
+                                    'email': user.email,
+                                    'step': 'verify_otp',
+                                }, status=200)
+                            return Response({
+                                'message': "Connexion acceptée mais l'envoi du code OTP a échoué. Réessayez ou contactez le support.",
+                            }, status=503)
 
                         else:
                             return Response({"message": "Vos identifiants sont incorrects"}, status=400)
                 except User.DoesNotExist:
                     return Response({"status": "failure", "message": "Ce compte n'existe pas. Veuillez-vous enregistrer"}, status=400)
             return Response({"message": "Votre mot de passe est requis"}, status=401)
+
+
+class VerifyOTPView(LoggingMixin, generics.CreateAPIView):
+    """
+    Vérifie le code OTP envoyé par email après login.
+    Body: { "email": "user@example.com", "otp": "123456" }.
+    En cas de succès, renvoie le token JWT et les données utilisateur.
+    """
+    permission_classes = ()
+    serializer_class = VerifyOTPSerializer
+
+    def post(self, request, *args, **kwargs):
+        serializer = VerifyOTPSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        email = serializer.validated_data['email']
+        otp = serializer.validated_data['otp'].strip()
+        try:
+            user = User.objects.get(email__iexact=email)
+        except User.DoesNotExist:
+            return Response({"message": "Aucun compte associé à cet email."}, status=status.HTTP_404_NOT_FOUND)
+        otp_record = LoginOTP.objects.filter(user=user, code=otp).order_by('-created_at').first()
+        if not otp_record:
+            return Response({"message": "Code OTP invalide."}, status=status.HTTP_400_BAD_REQUEST)
+        if not otp_record.is_valid():
+            return Response({"message": "Ce code OTP a expiré ou a déjà été utilisé."}, status=status.HTTP_400_BAD_REQUEST)
+        otp_record.used = True
+        otp_record.save(update_fields=['used'])
+        token = jwt_encode_handler(jwt_payload_handler(user))
+        return Response({'token': token, 'data': UserGetSerializer(user).data}, status=200)
+
 
 class VendeurAPIListView(generics.ListCreateAPIView):
     """
@@ -359,45 +417,9 @@ class ProduitByVendeurAPIListView(generics.ListAPIView):
 
 
 
-
-class VariationAPIListView(generics.ListCreateAPIView):
-    """GET /api/variations/ | POST /api/variations/"""
+class VariationAPIView(LoggingMixin, generics.CreateAPIView):
     queryset = Variation.objects.all()
     serializer_class = VariationSerializer
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request, format=None):
-        items = Variation.objects.all().order_by('-pk')
-        limit = request.query_params.get('limit')
-        return KgPagination.get_response(limit, items, request, VariationGetSerializer)
-
-    def post(self, request, format=None):
-        data = request.data.copy()
-        image_ids = []
-        if request.FILES.getlist('images'):
-            image_ids = get_images(request.FILES.getlist('images'))
-        if 'images' in data:
-            del data['images']
-        serializer = VariationSerializer(data=data)
-        if serializer.is_valid():
-            item = serializer.save()
-            for iid in image_ids:
-                item.images.add(iid)
-            item.save()
-            item.produit.variations.add(item)
-            item.produit.stock += Decimal(str(item.quantite))
-            item.produit.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-class VariationAPIView(generics.RetrieveAPIView):
-    """GET /api/variations/<slug>/ | PUT | DELETE"""
-    queryset = Variation.objects.all()
-    serializer_class = VariationSerializer
-    permission_classes = [IsAuthenticated]
-    lookup_field = 'slug'
-    lookup_url_kwarg = 'slug'
 
     def get(self, request, slug, format=None):
         try:
@@ -405,36 +427,78 @@ class VariationAPIView(generics.RetrieveAPIView):
             serializer = VariationGetSerializer(item)
             return Response(serializer.data)
         except Variation.DoesNotExist:
-            return Response(status=status.HTTP_404_NOT_FOUND)
+            return Response(status=404)
 
     def put(self, request, slug, format=None):
+        images = []
+        if 'images' in request.data and request.data['images']:
+            images = get_images(request.FILES.getlist('images', []))
+        self.data = request.data.copy()
+        if "images" in self.data and self.data['images']:
+            del self.data['images']
         try:
             item = Variation.objects.get(slug=slug)
+            serializer = VariationSerializer(
+                item, data=self.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                for i in images:
+                    item.images.add(i)
+                item.save()
+
+                def do_after():
+                    total_quantite = Variation.objects.filter(produit=item.produit).annotate(
+                        quantite_as_numeric=Cast('quantite', models.DecimalField(
+                            max_digits=10, decimal_places=2))
+                    ).aggregate(sum_quantite=Sum('quantite_as_numeric'))
+                    sum_of_quantite = total_quantite['sum_quantite']
+                    item.produit.stock = sum_of_quantite
+                    item.produit.save()
+                response = Response(VariationGetSerializer(item).data)
+                response._resource_closers.append(do_after)
+                return response
+            return TranslatedErrorResponse(serializer.errors, status=400)
         except Variation.DoesNotExist:
-            return Response(status=status.HTTP_404_NOT_FOUND)
-        data = request.data.copy()
-        image_ids = []
-        if request.FILES.getlist('images'):
-            image_ids = get_images(request.FILES.getlist('images'))
-        if 'images' in data:
-            del data['images']
-        serializer = VariationSerializer(item, data=data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            for iid in image_ids:
-                item.images.add(iid)
-            item.save()
-            total_quantite = Variation.objects.filter(produit=item.produit).aggregate(sum_quantite=Sum('quantite'))
-            sum_of_quantite = total_quantite.get('sum_quantite') or Decimal('0')
-            item.produit.stock = sum_of_quantite
-            item.produit.save()
-            return Response(VariationGetSerializer(item).data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response(status=404)
 
     def delete(self, request, slug, format=None):
         try:
             item = Variation.objects.get(slug=slug)
+            item.delete()
+            return Response(status=204)
         except Variation.DoesNotExist:
-            return Response(status=status.HTTP_404_NOT_FOUND)
-        item.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+            return Response(status=404)
+
+
+class VariationAPIListView(generics.CreateAPIView):
+    """
+    GET api/vendeur/
+    """
+    queryset = Variation.objects.all()
+    serializer_class = VariationSerializer
+
+    def get(self, request, format=None):
+        items = Variation.objects.all()
+        limit = self.request.query_params.get('limit')
+        return KgPagination.get_response(limit, items, request, VariationGetSerializer)
+
+    def post(self, request, format=None):
+        self.data = request.data.copy()
+        images = []
+        if 'images' in request.data and request.data['images']:
+            images = get_images(request.FILES.getlist('images', []))
+        if "images" in self.data and self.data['images']:
+            del self.data['images']
+        serializer = VariationSerializer(data=self.data)
+        if serializer.is_valid():
+            item = serializer.save()
+            for i in images:
+                item.images.add(i)
+            item.save()
+            item.produit.variations.add(item)
+            # Now stock is an decimal field
+            item.produit.stock += Decimal(item.quantite)
+            # item.produit.stock += int(item.quantite)
+            item.produit.save()
+            return Response(serializer.data, status=201)
+        return Response(serializer.errors, status=400)

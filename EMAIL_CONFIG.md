@@ -1,25 +1,25 @@
 # Configuration de l'envoi d'emails - Gestio-Stock
 
+La configuration est **alignée sur backend_easymarket_multivendor** (voir `docs/RECAP_CONFIG_EMAIL.md`).
+
 ## Important
 
-**Sans `EMAIL_HOST` dans le .env** : les emails s'affichent uniquement dans la console du serveur (terminal).  
-Le vendeur ne reçoit rien dans sa boîte mail. C'est le mode par défaut si la config email n'est pas complète.
+**Sans `EMAIL_HOST_PASSWORD`** (ou avec `USE_CONSOLE_EMAIL=1`) : les emails ne partent pas en SMTP ; en mode console le message s’affiche dans le terminal.
 
-**Avec `EMAIL_HOST` configuré** : les emails sont réellement envoyés (Gmail, Mailtrap, etc.).
+**Avec les variables SMTP remplies** : les emails sont envoyés (Gmail, Mailtrap, etc.).
 
 ## Variables à ajouter dans votre fichier `.env`
 
-Pour que les vendeurs reçoivent les identifiants par email, ajoutez ces variables dans votre `.env` :
-
 ```env
-# Configuration Email (Gmail SMTP)
-EMAIL_HOST=smtp.gmail.com
-EMAIL_PORT=587
+# Configuration Email (Gmail SMTP, comme easymarket)
 EMAIL_HOST_USER=noreply.gestio-stock@gmail.com
 EMAIL_HOST_PASSWORD=votre_mot_de_passe_application
 
-# Optionnel : nom de l'application affiché dans les emails
+# Optionnel : nom affiché dans l’expéditeur des emails
 APP_NAME=Gestio-Stock
+
+# Optionnel : 1 / true / yes = pas d’envoi SMTP, affichage en console uniquement
+# USE_CONSOLE_EMAIL=1
 ```
 
 ## Configuration Gmail

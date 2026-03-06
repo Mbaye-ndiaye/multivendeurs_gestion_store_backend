@@ -1,3 +1,5 @@
+
+
 from api.models import *
 from api.serializers import *
 
@@ -37,28 +39,28 @@ def get_variation(array_items):
             
     return variations
 
-def get_orderproduits(array_produits):
-    orderproduits = []
-    for el in array_produits:
+# def get_orderproduits(array_produits):
+#     orderproduits = []
+#     for el in array_produits:
 
-        orderproduitsSerializer = OrderItemSerializer(
-            data={
-                    "produit": el.get('produit'),
-                    "quantite": el.get('quantite'),
-                    "prix": el.get('prix'),
-                    "order": el.get('order'),
-                    "variations": el.get('variations',[])
-                })
-        if orderproduitsSerializer.is_valid():
-            orderproduitsSerializer.save()
-            orderproduits.append(orderproduitsSerializer.data['id'])
+#         orderproduitsSerializer = OrderItemSerializer(
+#             data={
+#                     "produit": el.get('produit'),
+#                     "quantite": el.get('quantite'),
+#                     "prix": el.get('prix'),
+#                     "order": el.get('order'),
+#                     "variations": el.get('variations',[])
+#                 })
+#         if orderproduitsSerializer.is_valid():
+#             orderproduitsSerializer.save()
+#             orderproduits.append(orderproduitsSerializer.data['id'])
             
        
-    return orderproduits
+#     return orderproduits
 
 
-def get_and_process_produits(request):
-    produits = []
-    if 'produits' in request.data and request.data['produits']:
-        produits = get_orderproduits(request.data.get('produits', []))
-    return produits
+# def get_and_process_produits(request):
+#     produits = []
+#     if 'produits' in request.data and request.data['produits']:
+#         produits = get_orderproduits(request.data.get('produits', []))
+#     return produits

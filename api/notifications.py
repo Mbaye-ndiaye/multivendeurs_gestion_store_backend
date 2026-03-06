@@ -12,10 +12,8 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-try:
-    APP_NAME = getattr(settings, 'APP_NAME', 'Gestion stock')
-except Exception:
-    APP_NAME = "Gestion stock"
+# Aligné sur backend_easymarket_multivendor : APP_NAME depuis settings
+APP_NAME = getattr(settings, 'APP_NAME', 'Gestio-Stock')
 
 
 def send_email(subject, to, template_src, context_dict=None, file=None):
@@ -33,11 +31,12 @@ def send_email(subject, to, template_src, context_dict=None, file=None):
         context_dict = {}
 
     try:
-        if hasattr(settings, 'EMAIL_HOST_USER') and hasattr(settings, 'EMAIL_HOST_PASSWORD'):
+        # Même logique que backend_easymarket_multivendor (Notif.send_email)
+        if hasattr(settings, 'EMAIL_HOST_USER') and getattr(settings, 'EMAIL_HOST_PASSWORD', None):
             from_email = f'{APP_NAME} <{settings.EMAIL_HOST_USER}>'
         else:
-            from_email = f'{APP_NAME} <noreply@babacarndiay546.com>'
-            logger.warning("EMAIL_HOST_USER ou EMAIL_HOST_PASSWORD non configuré. Email non envoyé.")
+            from_email = f'{APP_NAME} <noreply@gestio-stock.local>'
+            logger.warning("EMAIL_HOST_USER ou EMAIL_HOST_PASSWORD non configuré. Email peut échouer.")
 
         html_content = render_to_string(template_src, context_dict)
         text_content = strip_tags(html_content)
