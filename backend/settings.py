@@ -158,18 +158,16 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
-# --- Configuration email (alignée sur backend_easymarket_multivendor) ---
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_USE_TLS = True
 EMAIL_PORT = 587
-EMAIL_HOST_USER = 'noreply.babacarndiay546@gmail.com'
+EMAIL_HOST_USER = 'babacarndiay546@gmail.com'
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
 EMAIL_USE_SSL = False
 EMAIL_TIMEOUT = 20
 EMAIL_SSL_KEYFILE = None
 EMAIL_SSL_CERTFILE = None
 APP_NAME = os.environ.get('APP_NAME')
-# Si True : pas d'envoi SMTP, message affiché dans la console (dev)
-USE_CONSOLE_EMAIL = os.environ.get('USE_CONSOLE_EMAIL', '').lower() in ('1', 'true', 'yes')
+
 EMAIL_TIMEOUT = 20

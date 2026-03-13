@@ -11,7 +11,7 @@ schema_view = get_schema_view(
         default_version="v1",
         description="Documentation de l’API Gestio-Stock",
         terms_of_service="https://www.google.com/policies/terms/",
-        contact=openapi.Contact(email="contact@gestio-stock.local"),
+        contact=openapi.Contact(email="contact@gestion-stock.local"),
         license=openapi.License(name="BSD License"),
     ),
     public=True,

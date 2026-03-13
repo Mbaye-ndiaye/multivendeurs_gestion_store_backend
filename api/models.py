@@ -242,7 +242,7 @@ class LoginOTP(models.Model):
 
 class Image(models.Model):
     slug = models.SlugField(default=uuid.uuid1)
-    # image = models.ImageField(upload_to='uploads/article', null=True, blank=True)
+    image = models.ImageField(upload_to='uploads/article', null=True, blank=True)
     archived = models.BooleanField(default=False)
 
     def __str__(self):
