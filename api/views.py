@@ -17,13 +17,15 @@ from api.pagination import KgPagination
 from api.images import get_images
 from rest_framework_tracking.mixins import LoggingMixin, BaseLoggingMixin
 from django.contrib.auth import authenticate, login, logout
-from rest_framework_jwt.settings import api_settings
+from rest_framework_simplejwt.tokens import RefreshToken
 from api.utils import Utils
 from django.utils.decorators import method_decorator
 
 
-jwt_payload_handler = api_settings.JWT_PAYLOAD_HANDLER
-jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
+def get_jwt_for_user(user):
+    """Return an access token string for the given user."""
+    refresh = RefreshToken.for_user(user)
+    return str(refresh.access_token)
 
 
 class TranslatedErrorResponse(Response):
@@ -53,8 +55,7 @@ class LoginView(LoggingMixin, generics.CreateAPIView):
                     if search_items.exists():
                         item1 = User.objects.get(telephone=email)
                         if item1:
-                            token = jwt_encode_handler(
-                                jwt_payload_handler(item1))
+                            token = get_jwt_for_user(item1)
                             return Response({'token': token, 'data': UserGetSerializer(item1).data}, status=200)
 
                     else:
@@ -129,8 +130,23 @@ class VerifyOTPView(LoggingMixin, generics.CreateAPIView):
             return Response({"message": "Ce code OTP a expiré ou a déjà été utilisé."}, status=status.HTTP_400_BAD_REQUEST)
         otp_record.used = True
         otp_record.save(update_fields=['used'])
-        token = jwt_encode_handler(jwt_payload_handler(user))
+        token = get_jwt_for_user(user)
         return Response({'token': token, 'data': UserGetSerializer(user).data}, status=200)
+
+
+class LogoutView(LoggingMixin, generics.GenericAPIView):
+    """Déconnecte l'utilisateur actuellement authentifié.
+
+    Note: avec JWT stateless, le token reste valide côté client (il n'est pas blacklisté).
+    L'utilisateur peut simplement supprimer le token côté client pour "se déconnecter".
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        # Si vous utilisez des sessions (SessionAuthentication), ceci est utile.
+        logout(request)
+        return Response({"message": "Déconnexion réussie."}, status=status.HTTP_200_OK)
 
 
 class VendeurAPIListView(generics.ListCreateAPIView):
