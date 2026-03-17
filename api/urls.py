@@ -9,6 +9,8 @@ urlpatterns = [
     path('login/', views.LoginView.as_view()),
     path('verify-otp/', views.VerifyOTPView.as_view()),
     path('logout/', views.LogoutView.as_view()),
+    path('forgot-password/', views.ForgotPasswordView.as_view()),
+    path('reset-password/', views.ResetPasswordView.as_view()),
 
     # Vendeurs
     path('vendeurs/', views.VendeurAPIListView.as_view(), name='api-vendors-list'),
