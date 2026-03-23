@@ -15,6 +15,11 @@ from dotenv import load_dotenv, dotenv_values
 import os
 import datetime
 import sys
+import dj_database_url
+# from environ import Env
+# env = Env()
+# Env.read_env()
+
 load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -38,9 +43,11 @@ SECRET_KEY = os.environ.get("SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["*"]
+ALLOWED_HOSTS = ["localhost", "127.0.0.1", 'gestionstock.up.railway.app']
 
-
+CSRF_TRUSTED_ORIGINS = [
+    "https://gestionstock.up.railway.app"
+]
 # Application definition
 
 
@@ -109,9 +116,6 @@ REST_FRAMEWORK = {
     'PAGE_SIZE': 10,
 }
 
-# Database
-# https://docs.djangoproject.com/en/6.0/ref/settings/#databases
-
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
@@ -122,6 +126,9 @@ DATABASES = {
         'PORT': os.environ.get('DB_PORT'),
     }
 }
+# POSTGRES_LOCALLY = True
+# if ENVIRONNEMENT == "production" or POSTGRES_LOCALLY == True:
+#     DATABASES['default'] = dj_database_url.parse(env('DATABASE_URL'))
 # DB_PORT="10392"
 
 
