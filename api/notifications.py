@@ -1,8 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Module de notifications par email.
-Utilise Django EmailMultiAlternatives pour l'envoi d'emails HTML.
-"""
 from django.template.loader import render_to_string
 from django.core.mail import EmailMultiAlternatives
 from django.utils.html import strip_tags
@@ -12,9 +7,8 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-# Aligné sur backend_easymarket_multivendor : APP_NAME depuis settings
-APP_NAME = getattr(settings, 'APP_NAME', 'Gestio-Stock')
 
+APP_NAME = getattr(settings, 'APP_NAME', 'Gestion-Stock')
 
 def send_email(subject, to, template_src, context_dict=None, file=None):
     """
