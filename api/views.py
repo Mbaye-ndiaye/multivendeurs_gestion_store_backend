@@ -114,7 +114,7 @@ logger = logging.getLogger(__name__)
 
 class CreateSuperAdminView(generics.GenericAPIView):
     permission_classes = [AllowAny]
-    queryset = User.objects.all()
+    serializer_class = CreateSuperAdminSerializer 
 
     def post(self, request, *args, **kwargs):
         """
