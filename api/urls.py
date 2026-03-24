@@ -6,7 +6,7 @@ from . import views
 
 urlpatterns = [
     # authentification
-    path('create-superadmin/', views.CreateSuperAdminView.as_view(), name='create-superadmin'),
+    # path('create-superadmin/', views.CreateSuperAdminView.as_view(), name='create-superadmin'),
     path('login/', views.LoginView.as_view()),
     path('verify-otp/', views.VerifyOTPView.as_view()),
     path('logout/', views.LogoutView.as_view()),
