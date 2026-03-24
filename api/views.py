@@ -20,7 +20,8 @@ from django.contrib.auth import authenticate, login, logout
 from rest_framework_simplejwt.tokens import RefreshToken
 from api.utils import Utils
 from django.utils.decorators import method_decorator
-
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly
 
 def get_jwt_for_user(user):
     """Return an access token string for the given user."""
@@ -102,7 +103,78 @@ class LoginView(LoggingMixin, generics.CreateAPIView):
                 except User.DoesNotExist:
                     return Response({"status": "failure", "message": "Ce compte n'existe pas. Veuillez-vous enregistrer"}, status=400)
             return Response({"message": "Votre mot de passe est requis"}, status=401)
-
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def create_superadmin_endpoint(request):
+    """
+    Endpoint temporaire pour créer un super admin
+    POST /api/create-superadmin/
+    Body: {
+        "email": "admin@example.com",
+        "password": "MotDePasse123!",
+        "nom": "Nom",
+        "prenom": "Prénom"
+    }
+    
+    ⚠️ SÉCURITÉ : Cet endpoint doit être commenté après utilisation
+    """
+    try:
+        # Vérifier si un super admin existe déjà (sécurité)
+        # SafeDeleteModel filtre automatiquement les objets supprimés (DELETED_INVISIBLE)
+        if User.objects.filter(user_type='superadmin').exists():
+            return Response(
+                {'error': 'Un super admin existe déjà. Utilisez la commande de gestion ou connectez-vous.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Récupérer les données
+        email = request.data.get('email')
+        password = request.data.get('password')
+        nom = request.data.get('nom', '')
+        prenom = request.data.get('prenom', '')
+        
+        # Validation
+        if not email or not password:
+            return Response(
+                {'error': 'Email et mot de passe sont requis.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Vérifier si l'email existe déjà
+        # SafeDeleteModel filtre automatiquement les objets supprimés (DELETED_INVISIBLE)
+        if User.objects.filter(email=email).exists():
+            return Response(
+                {'error': 'Cet email est déjà utilisé.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Créer le super admin
+        superadmin = User.objects.create_superuser(
+            email=email,
+            password=password,
+            nom=nom,
+            prenom=prenom,
+            user_type='superadmin',
+            is_staff=True,
+            is_active=True
+        )
+        
+        logger.info(f"✅ Super admin créé avec succès : {email}")
+        
+        return Response({
+            'message': 'Super admin créé avec succès !',
+            'email': superadmin.email,
+            'nom': superadmin.nom,
+            'prenom': superadmin.prenom,
+            'warning': '⚠️ IMPORTANT : Re-commentez cet endpoint dans views.py et urls.py après utilisation !'
+        }, status=status.HTTP_201_CREATED)
+        
+    except Exception as e:
+        logger.error(f"❌ Erreur lors de la création du super admin : {str(e)}")
+        return Response(
+            {'error': f'Erreur lors de la création du super admin : {str(e)}'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
 
 class VerifyOTPView(LoggingMixin, generics.CreateAPIView):
     """
