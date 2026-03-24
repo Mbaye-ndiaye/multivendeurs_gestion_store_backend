@@ -12,18 +12,20 @@ from easy_password_generator import PassGen
 
 from api.models import *
 from api.serializers import *
-from api.email_utils import send_vendeur_credentials, send_otp_email
+from api.email_utils import send_vendeur_credentials, send_otp_email, send_password_reset_email
 from api.pagination import KgPagination
 from api.images import get_images
 from rest_framework_tracking.mixins import LoggingMixin, BaseLoggingMixin
 from django.contrib.auth import authenticate, login, logout
-from rest_framework_jwt.settings import api_settings
+from rest_framework_simplejwt.tokens import RefreshToken
 from api.utils import Utils
 from django.utils.decorators import method_decorator
 
 
-jwt_payload_handler = api_settings.JWT_PAYLOAD_HANDLER
-jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
+def get_jwt_for_user(user):
+    """Return an access token string for the given user."""
+    refresh = RefreshToken.for_user(user)
+    return str(refresh.access_token)
 
 
 class TranslatedErrorResponse(Response):
@@ -53,8 +55,7 @@ class LoginView(LoggingMixin, generics.CreateAPIView):
                     if search_items.exists():
                         item1 = User.objects.get(telephone=email)
                         if item1:
-                            token = jwt_encode_handler(
-                                jwt_payload_handler(item1))
+                            token = get_jwt_for_user(item1)
                             return Response({'token': token, 'data': UserGetSerializer(item1).data}, status=200)
 
                     else:
@@ -129,8 +130,107 @@ class VerifyOTPView(LoggingMixin, generics.CreateAPIView):
             return Response({"message": "Ce code OTP a expiré ou a déjà été utilisé."}, status=status.HTTP_400_BAD_REQUEST)
         otp_record.used = True
         otp_record.save(update_fields=['used'])
-        token = jwt_encode_handler(jwt_payload_handler(user))
+        token = get_jwt_for_user(user)
         return Response({'token': token, 'data': UserGetSerializer(user).data}, status=200)
+
+
+class LogoutView(LoggingMixin, generics.GenericAPIView):
+    """Déconnecte l'utilisateur actuellement authentifié.
+
+    Note: avec JWT stateless, le token reste valide côté client (il n'est pas blacklisté).
+    L'utilisateur peut simplement supprimer le token côté client pour "se déconnecter".
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        # Si vous utilisez des sessions (SessionAuthentication), ceci est utile.
+        logout(request)
+        return Response({"message": "Déconnexion réussie."}, status=status.HTTP_200_OK)
+
+
+class ForgotPasswordView(LoggingMixin, generics.CreateAPIView):
+    """
+    Demande de réinitialisation de mot de passe.
+    Body: { "email": "user@example.com" }
+    Envoie un email avec un token de réinitialisation si l'email existe.
+    """
+    permission_classes = ()
+    serializer_class = ForgotPasswordSerializer
+
+    def post(self, request, *args, **kwargs):
+        serializer = ForgotPasswordSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        email = serializer.validated_data['email']
+        try:
+            user = User.objects.get(email__iexact=email)
+        except User.DoesNotExist:
+            # Pour sécurité, on ne révèle pas si l'email existe ou pas
+            return Response({
+                "message": "Si cet email est associé à un compte, un lien de réinitialisation a été envoyé."
+            }, status=status.HTTP_200_OK)
+
+        # Générer un token unique
+        import secrets
+        reset_token = secrets.token_urlsafe(32)
+        expires_at = timezone.now() + timedelta(hours=1)  # Valide 1 heure
+
+        # Créer le token en base
+        PasswordResetToken.objects.create(
+            user=user,
+            token=reset_token,
+            expires_at=expires_at
+        )
+
+        # Envoyer l'email
+        if send_password_reset_email(user, reset_token):
+            return Response({
+                "message": "Un email de réinitialisation a été envoyé à votre adresse email."
+            }, status=status.HTTP_200_OK)
+        else:
+            return Response({
+                "message": "Erreur lors de l'envoi de l'email. Veuillez réessayer."
+            }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+
+
+class ResetPasswordView(LoggingMixin, generics.CreateAPIView):
+    """
+    Réinitialise le mot de passe avec un token valide.
+    Body: { "token": "abc123...", "new_password": "nouveau123", "confirm_password": "nouveau123" }
+    """
+    permission_classes = ()
+    serializer_class = ResetPasswordSerializer
+
+    def post(self, request, *args, **kwargs):
+        serializer = ResetPasswordSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        token = serializer.validated_data['token']
+        new_password = serializer.validated_data['new_password']
+
+        try:
+            reset_token = PasswordResetToken.objects.get(token=token)
+        except PasswordResetToken.DoesNotExist:
+            return Response({"message": "Token invalide."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not reset_token.is_valid():
+            return Response({"message": "Ce token a expiré ou a déjà été utilisé."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Mettre à jour le mot de passe
+        user = reset_token.user
+        user.set_password(new_password)
+        user.save()
+
+        # Marquer le token comme utilisé
+        reset_token.used = True
+        reset_token.save(update_fields=['used'])
+
+        return Response({
+            "message": "Votre mot de passe a été réinitialisé avec succès."
+        }, status=status.HTTP_200_OK)
 
 
 class VendeurAPIListView(generics.ListCreateAPIView):

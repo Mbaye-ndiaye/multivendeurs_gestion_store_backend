@@ -240,6 +240,29 @@ class LoginOTP(models.Model):
         return not self.used and timezone.now() < self.expires_at
 
 
+class PasswordResetToken(models.Model):
+    """
+    Token de réinitialisation de mot de passe envoyé par email.
+    Permet de réinitialiser le mot de passe via POST /api/reset-password/.
+    """
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='password_reset_tokens')
+    token = models.CharField(max_length=64, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+    used = models.BooleanField(default=False)
+
+    class Meta:
+        verbose_name = "Token de reset mot de passe"
+        verbose_name_plural = "Tokens de reset mot de passe"
+        ordering = ("-created_at",)
+
+    def __str__(self):
+        return f"Reset token user={self.user_id} exp={self.expires_at}"
+
+    def is_valid(self):
+        return not self.used and timezone.now() < self.expires_at
+
+
 class Image(models.Model):
     slug = models.SlugField(default=uuid.uuid1)
     image = models.ImageField(upload_to='uploads/article', null=True, blank=True)
