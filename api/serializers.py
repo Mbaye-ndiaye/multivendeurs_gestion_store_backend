@@ -3,7 +3,27 @@ from api.models import *
 
 
 # --- Vendeur (doit être avant CategorieGetSerializer / ProduitGetSerializer) ---
+class CreateSuperAdminSerializer(serializers.Serializer):
+    email = serializers.EmailField(required=True)
+    password = serializers.CharField(write_only=True, required=True, min_length=8)
+    nom = serializers.CharField(required=False, allow_blank=True)
+    prenom = serializers.CharField(required=False, allow_blank=True)
 
+    def validate_email(self, value):
+        if User.objects.filter(email=value).exists():
+            raise serializers.ValidationError("Cet email est déjà utilisé.")
+        return value
+
+    def create(self, validated_data):
+        return User.objects.create_superuser(
+            email=validated_data['email'],
+            password=validated_data['password'],
+            nom=validated_data.get('nom', ''),
+            prenom=validated_data.get('prenom', ''),
+            user_type='superadmin',
+            is_staff=True,
+            is_active=True
+        )
 class LoginSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
