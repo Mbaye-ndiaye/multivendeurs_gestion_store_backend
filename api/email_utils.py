@@ -100,4 +100,4 @@ def send_password_reset_email(user, reset_token):
     except Exception as e:
         logger.error("Erreur envoi email reset à %s: %s", user.email, str(e))
         print(f"\n[ERREUR EMAIL RESET] {user.email}: {e}\n")
-        return False
+    raise e  # 🔥 très important
