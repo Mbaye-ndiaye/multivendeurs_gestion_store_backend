@@ -91,7 +91,7 @@ def send_password_reset_email(user, reset_token):
         send_mail(
             subject=subject,
             message=message,
-            from_email=settings.EMAIL_HOST_USER or getattr(settings, 'DEFAULT_FROM_EMAIL', None),
+            from_email=settings.EMAIL_HOST_USER,
             recipient_list=[user.email],
             fail_silently=False,
         )
