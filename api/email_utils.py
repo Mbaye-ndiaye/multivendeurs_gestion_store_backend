@@ -4,6 +4,9 @@ Envoi d'emails (identifiants vendeur, etc.).
 import logging
 from django.core.mail import send_mail
 from django.conf import settings
+from django.http import HttpResponse
+
+from backend.settings import EMAIL_HOST_USER
 
 logger = logging.getLogger(__name__)
 
@@ -23,20 +26,29 @@ def send_vendeur_credentials(vendeur, plain_password):
         "Cordialement,\n"
         "L'équipe Gestion Store"
     )
-    try:
+    # try:
+    #     send_mail(
+    #         subject=subject,
+    #         message=message,
+    #         from_email=settings.EMAIL_HOST_USER,
+    #         recipient_list=[vendeur.email],
+    #         fail_silently=False,
+    #     )
+    #     logger.info("Email identifiants envoyé avec succès à %s", vendeur.email)
+    #     return True
+    # except Exception as e:
+    #     logger.error("Erreur envoi email à %s: %s", vendeur.email, str(e))
+    #     print(f"\n[ERREUR EMAIL] {vendeur.email}: {e}\n")  # Visible dans la console du serveur
+    #     return False
+    def test_email(request):
         send_mail(
-            subject=subject,
-            message=message,
-            from_email=settings.EMAIL_HOST_USER,
-            recipient_list=[vendeur.email],
-            fail_silently=False,
-        )
-        logger.info("Email identifiants envoyé avec succès à %s", vendeur.email)
-        return True
-    except Exception as e:
-        logger.error("Erreur envoi email à %s: %s", vendeur.email, str(e))
-        print(f"\n[ERREUR EMAIL] {vendeur.email}: {e}\n")  # Visible dans la console du serveur
-        return False
+        "Test",
+        "Email fonctionne",
+        EMAIL_HOST_USER,
+        ["babacarndiay546@gmail.com"],
+        fail_silently=False
+    )
+    return HttpResponse("Email envoyé")
 
 
 def send_otp_email(user, code):
