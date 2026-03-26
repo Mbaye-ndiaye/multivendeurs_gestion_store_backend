@@ -28,7 +28,7 @@ SECRET_KEY = os.environ.get("SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = ["https://multivendeurs-gestion-store-backend.onrender.com", "*"]
+ALLOWED_HOSTS = ["multivendeurs-gestion-store-backend.onrender.com", "*"]
 
 # Application definition
 
