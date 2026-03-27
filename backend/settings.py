@@ -26,11 +26,10 @@ env = dotenv_values(".env")
 SECRET_KEY = os.environ.get("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = ["multivendeurs-gestion-store-backend.onrender.com", "*"]
 
-# Application definition
 
 
 INSTALLED_APPS = [
