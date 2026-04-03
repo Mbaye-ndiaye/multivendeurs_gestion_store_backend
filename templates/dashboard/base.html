@@ -16,9 +16,9 @@
             --sidebar-width: 250px;
             --sidebar-collapsed-width: 80px;
             --header-height: 60px;
-            --primary-color: #667eea;
-            --primary-dark: #5a67d8;
-            --sidebar-bg: #1a202c;
+            --primary-color: #111827;
+            --primary-dark: #111827;
+            --sidebar-bg: #111827;
             --sidebar-hover: #2d3748;
         }
 
@@ -169,7 +169,8 @@
             width: 40px;
             height: 40px;
             border-radius: 50%;
-            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+            /* background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dar) 100%); */
+            background: #164E63;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -202,7 +203,8 @@
                 left: 0;
                 width: 100%;
                 height: 100%;
-                background: rgba(0, 0, 0, 0.5);
+                /* background: rgba(0, 0, 0, 0.5); */
+                /* #164E63 */
                 z-index: 999;
             }
 
@@ -216,7 +218,7 @@
     <!-- Sidebar -->
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-header">
-            <h3><i class="fas fa-boxes-stacked"></i> <span class="menu-text">Gestion Stock</span></h3>
+            <h3><i class="fas fa-boxes-stacked"></i><span class="menu-text">Gestion Stock</span></h3>
         </div>
         
         <ul class="sidebar-menu">
@@ -225,7 +227,7 @@
                 <a href="{% url 'dashboard-home' %}"
                    class="{% if request.resolver_match.url_name == 'dashboard-home' %}active{% endif %}">
                     <i class="fas fa-home"></i>
-                    <span class="menu-text">Tableau de bord</span>
+                    <span class="menu-text text-white">Tableau de bord</span>
                 </a>
             </li>
 
@@ -245,18 +247,30 @@
 
             
 
-           
+                
+            <li>
+                <a href="{% url 'dashboard-categories' %}"
+                   class="{% if 'dashboard-categor' in request.resolver_match.url_name %}active{% endif %}">
+                    <i class="fas fa-folder"></i>
+                    <span class="menu-text text-white">Catégories</span>
+                </a>
+            </li>
 
-            
+            <!-- Articles / Produits -->
+            <li>
+                <a href="{% url 'dashboard-articles' %}"
+                   class="{% if 'dashboard-article' in request.resolver_match.url_name %}active{% endif %}">
+                    <i class="fas fa-box"></i>
+                    <span class="menu-text text-white">Articles</span>
+                </a>
+            </li>
 
-            
-
-            <!-- Vendeurs (multi-boutiques) - déjà implémenté -->
+            <!-- Vendeurs -->
             <li>
                 <a href="{% url 'dashboard-vendeurs' %}"
-                   class="{% if 'dashboard-vendor' in request.resolver_match.url_name %}active{% endif %}">
+                   class="{% if 'dashboard-vendeur' in request.resolver_match.url_name %}active{% endif %}">
                     <i class="fas fa-store"></i>
-                    <span class="menu-text">Vendeurs</span>
+                    <span class="menu-text text-white">Vendeurs</span>
                 </a>
             </li>
         </ul>

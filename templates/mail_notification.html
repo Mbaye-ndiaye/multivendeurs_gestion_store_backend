@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>{{ sujet }}</title>
+    <style type="text/css">
+        @media only screen and (max-width: 600px) {
+            .container { width: 100% !important; }
+        }
+    </style>
+</head>
+<body style="font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f9f9f9;">
+    <table class="container" cellpadding="0" cellspacing="0" border="0" align="center" width="600" style="max-width: 100%; margin: 0 auto; background-color: #ffffff; border: 1px solid #e5e5e5;">
+        <tr>
+            <td align="center" bgcolor="#ffffff" style="padding: 20px;">
+                <h1 style="color: #333333; margin-bottom: 20px;">{{ sujet }}</h1>
+                <p style="color: #555555; font-size: 16px; line-height: 1.5; text-align: left;">
+                    Bonjour <strong>{{ prenom }} {{ nom }}</strong>,
+                </p>
+                <p style="color: #555555; font-size: 16px; line-height: 1.5; text-align: left;">
+                    {{ contenu }}
+                </p>
+                {% if id == "true" %}
+                <div style="margin-top: 20px; padding: 15px; background-color: #f5f5f5; border-radius: 5px;">
+                    <p style="color: #333333; font-size: 16px; font-weight: bold; margin-bottom: 10px;">Vos informations de connexion :</p>
+                    <ul style="color: #555555; font-size: 16px; line-height: 1.8; text-align: left; margin: 0; padding-left: 20px;">
+                        <li><strong>Email :</strong> {{ email }}</li>
+                        <li><strong>Mot de passe :</strong> {{ password }}</li>
+                    </ul>
+                    <p style="color: #888888; font-size: 12px; margin-top: 15px;">
+                        Pour des raisons de sécurité, nous vous recommandons de changer ce mot de passe lors de votre première connexion.
+                    </p>
+                </div>
+                {% endif %}
+                <p style="color: #555555; font-size: 14px; line-height: 1.5; margin-top: 20px; text-align: left; font-weight: bold;">
+                    Cordialement !
+                </p>
+                <p style="color: #555555; font-size: 14px; line-height: 1.5; text-align: left; font-weight: bold;">
+                    Équipe {{ APP_NAMES }}
+                </p>
+            </td>
+        </tr>
+        <tr>
+            <td align="center" bgcolor="#343a40" style="padding: 15px; border-top: 1px solid #e5e5e5;">
+                <p style="color: #ffffff; font-size: 12px; margin: 0;">
+                    &copy; {{ year }} {{ APP_NAMES }}. Tous droits réservés.
+                </p>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

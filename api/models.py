@@ -32,71 +32,10 @@ USER_TYPES = (
     (DELETED, DELETED),
 )
 
-COMMANDE = 'commande'
-SEUIL = 'seuil'
-BLOCAGE = 'blocage'
-DEBLOCAGE = 'deblocage'
-DEPENSE = 'depense'
-
-NOTIF_TYPE = (
-    (COMMANDE, COMMANDE),
-    (SEUIL, SEUIL),
-    (BLOCAGE, BLOCAGE),
-    (DEBLOCAGE, DEBLOCAGE),
-    (DEPENSE, DEPENSE),
-)
-CASH = 'CASH'
-WAVE = 'WAVE'
-ORANGE_MONEY = 'ORANGE_MONEY'
-STRIPE = 'STRIPE'
-PAYONEER = 'PAYONEER'
-CHEQUE = "chèque"
-PAYPAL = "paypal"
-MOOV = "moov"
-MONEY_FLOOZ = "money_flooz"
-TMONEY = "tmoney"
-PAYGATE = "paygate"
-PAYTECH = "paytech"
-PAYMENT_MODE = (
-    ('ORANGE_SN_API_CASH_OUT', 'ORANGE_MONEY'),
-    ('WAVE_SN_API_CASH_OUT', 'WAVE'),
-    ('BANK_TRANSFER_SN_API_CASH_OUT', 'VIREMENT_BANCAIRE'),
-    (WAVE, WAVE),
-    (STRIPE, STRIPE),
-    (CASH, CASH),
-    (PAYONEER, PAYONEER),
-    (PAYPAL, PAYPAL),
-    (CHEQUE, CHEQUE),
-    (MOOV, MOOV),
-    (MONEY_FLOOZ, MONEY_FLOOZ),
-    (TMONEY, TMONEY),
-    (PAYGATE, PAYGATE),
-    (PAYTECH, PAYTECH),
-    (ORANGE_MONEY, ORANGE_MONEY),
-)
 
 
-NOUVELLE_COMMANDE = 'NOUVELLE_COMMANDE'
-EN_COURS_DE_TRAITEMENT = 'EN_COURS_DE_TRAITEMENT'
-EN_COURS_DE_LIVRAISON = 'EN_COURS_DE_LIVRAISON'
-LIVRE = 'LIVRE'
-ANNULE = 'ANNULE'
-ORDER_STATUS = (
-    ('NOUVELLE_COMMANDE', NOUVELLE_COMMANDE),
-    ('EN_COURS_DE_TRAITEMENT', EN_COURS_DE_TRAITEMENT),
-    ('EN_COURS_DE_LIVRAISON', EN_COURS_DE_LIVRAISON),
-    ('LIVRE', LIVRE),
-    ('ANNULE', ANNULE),
 
-)
-PAYEE = "payée"
-NON_PAYEE = "non payée"
-PARTIELLEMENT_PAYEE = "partiellement payée"
-PAID_STATUS = (
-    (PAYEE, PAYEE),
-    (NON_PAYEE, NON_PAYEE),
-    (PARTIELLEMENT_PAYEE, PARTIELLEMENT_PAYEE),
-)
+
 EUR = 'EUR'
 USD = 'USD'
 XOF = 'XOF'
@@ -105,6 +44,14 @@ CURRENCY = (
     ('USD', 'USD'),
     ('XOF', 'XOF')
 )
+
+# --- Champs optionnels vendeur (décommenter quand besoin) ---
+# TMONEY = 'TMONEY'
+# FLOOZ = 'FLOOZ'
+# PAYGATE_NETWORK = (
+#     (TMONEY, TMONEY),
+#     (FLOOZ, FLOOZ),
+# )
 
 # EMAIL = 'EMAIL'
 # SMS = 'SMS'
@@ -118,6 +65,28 @@ CURRENCY = (
 ADMIN_TYPE = (
     (ADMIN, ADMIN),
     (SUPERADMIN, SUPERADMIN)
+)
+
+FACTURE_PAYEE = 'payée'
+FACTURE_NON_PAYEE = 'non payée'
+FACTURE_PARTIELLEMENT = 'partiellement payée'
+FACTURE_PAID_STATUT = (
+    (FACTURE_PAYEE, FACTURE_PAYEE),
+    (FACTURE_NON_PAYEE, FACTURE_NON_PAYEE),
+    (FACTURE_PARTIELLEMENT, FACTURE_PARTIELLEMENT),
+)
+
+
+def _date_aujourdhui():
+    return timezone.now().date()
+
+TAILLE_UNIQUE = "taille_unique"
+TAILLE_VARIABLE = "taille_variable"
+TAILLE_UNIQUE_AVEC_COULEUR = "taille_unique_avec_couleur"
+TYPE_ARTICLES = (
+    (TAILLE_UNIQUE, TAILLE_UNIQUE),
+    (TAILLE_VARIABLE, TAILLE_VARIABLE),
+    (TAILLE_UNIQUE_AVEC_COULEUR, TAILLE_UNIQUE_AVEC_COULEUR),
 )
 
 class MyModelManager(SafeDeleteManager):
@@ -216,8 +185,26 @@ class Vendeur(User):
     nom_de_la_boutique = models.CharField(max_length=200)
     # couleur = models.CharField(max_length=50, blank=True, null=True)
     domaine = models.CharField(max_length=200, blank=True, null=True)
-    # api_key = models.CharField(max_length=200, blank=True, null=True)
     devise = models.CharField(max_length=20, choices=CURRENCY, default=XOF)
+
+    # ---------- Champs à décommenter quand vous en avez besoin ----------
+    # api_key (hashée en base, générée au save si vide)
+    # api_key = models.CharField(max_length=200, blank=True, null=True)
+    #
+    # devise (déjà actif ci-dessus ; décommenter la ligne ci-dessous si vous le déplacez ici)
+    # devise = models.CharField(max_length=20, choices=CURRENCY, default=XOF)
+    #
+    # Stripe
+    # stripe_publishable_key = models.CharField(max_length=200, null=True, blank=True)
+    # stripe_secret_key = models.CharField(max_length=200, null=True, blank=True)
+    # stripe_is_set = models.BooleanField(default=False)
+    # stripe_endpoint_secret = models.CharField(max_length=200, null=True, blank=True)
+    #
+    # Paygate (décommenter aussi PAYGATE_NETWORK en haut du fichier)
+    # paygate_api_key = models.CharField(max_length=200, null=True, blank=True)
+    # paygate_is_set = models.BooleanField(default=False)
+    # paygate_network = models.CharField(max_length=50, choices=PAYGATE_NETWORK, default=TMONEY)
+    # --------------------------------------------------------------------
 
     USERNAME_FIELD = 'email'
 
@@ -233,11 +220,235 @@ class Vendeur(User):
         # Définir le type d'utilisateur comme VENDEUR
         if not self.user_type:
             self.user_type = VENDEUR
-        
-        # Générer une clé API si elle n'existe pas
+
+        # Générer et hasher la clé API si besoin (décommenter quand api_key est activé)
         # if not self.api_key:
-        #     api_key = secrets.token_hex(32)  # 32 bytes = 64 characters
+        #     api_key = secrets.token_hex(32)  # 32 bytes = 64 caractères
         #     hashed_api_key = hashlib.sha256(api_key.encode()).hexdigest()
         #     self.api_key = hashed_api_key
-        
+
         super().save(*args, **kwargs)
+
+
+class LoginOTP(models.Model):
+    """
+    Code OTP envoyé par email après un login réussi (email + mot de passe).
+    Permet de finaliser l'authentification via POST /api/verify-otp/.
+    """
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='login_otps')
+    code = models.CharField(max_length=6)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+    used = models.BooleanField(default=False)
+
+    class Meta:
+        verbose_name = "OTP de connexion"
+        verbose_name_plural = "OTP de connexion"
+        ordering = ("-created_at",)
+
+    def __str__(self):
+        return f"OTP user={self.user_id} exp={self.expires_at}"
+
+    def is_valid(self):
+        return not self.used and timezone.now() < self.expires_at
+
+
+class PasswordResetToken(models.Model):
+    """
+    Token de réinitialisation de mot de passe envoyé par email.
+    Permet de réinitialiser le mot de passe via POST /api/reset-password/.
+    """
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='password_reset_tokens')
+    token = models.CharField(max_length=64, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+    used = models.BooleanField(default=False)
+
+    class Meta:
+        verbose_name = "Token de reset mot de passe"
+        verbose_name_plural = "Tokens de reset mot de passe"
+        ordering = ("-created_at",)
+
+    def __str__(self):
+        return f"Reset token user={self.user_id} exp={self.expires_at}"
+
+    def is_valid(self):
+        return not self.used and timezone.now() < self.expires_at
+
+
+class Facture(models.Model):
+    """
+    Facture émise par un vendeur : en-tête client + référence, total, lignes détaillées.
+    La signature du vendeur est l'image `User.signature` (héritée par Vendeur).
+    PDF généré comme Easymarket (template facturation.html + WeasyPrint).
+    """
+    slug = models.SlugField(default=uuid.uuid1)
+    reference = models.CharField(max_length=100)
+    client_nom = models.CharField(max_length=500)
+    client_telephone = models.CharField(max_length=50)
+    vendeur = models.ForeignKey(Vendeur, on_delete=models.CASCADE, related_name='factures')
+    total_general = models.DecimalField(max_digits=50, decimal_places=2, default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    date_facture = models.DateField(default=_date_aujourdhui)
+    date_echeance = models.DateField(default=_date_aujourdhui)
+    remise = models.DecimalField(max_digits=50, decimal_places=2, default=0)
+    paid_statut = models.CharField(
+        max_length=40, choices=FACTURE_PAID_STATUT, default=FACTURE_NON_PAYEE)
+    facture_pdf = models.FileField(upload_to='factures/pdfs/', null=True, blank=True)
+
+    class Meta:
+        verbose_name = "Facture"
+        verbose_name_plural = "Factures"
+        ordering = ['-created_at']
+        unique_together = [['vendeur', 'reference']]
+
+    def __str__(self):
+        return f"{self.reference} ({self.client_nom})"
+
+    @property
+    def montant_total_apres_remise(self):
+        return self.total_general - (self.remise or Decimal('0'))
+
+
+class LigneFacture(models.Model):
+    facture = models.ForeignKey(Facture, on_delete=models.CASCADE, related_name='lignes')
+    quantite = models.DecimalField(max_digits=50, decimal_places=2)
+    designation = models.CharField(max_length=500)
+    prix_unitaire = models.DecimalField(max_digits=50, decimal_places=2)
+    prix_total = models.DecimalField(max_digits=50, decimal_places=2)
+
+    class Meta:
+        verbose_name = "Ligne de facture"
+        verbose_name_plural = "Lignes de facture"
+        ordering = ['id']
+
+    def __str__(self):
+        return f"{self.designation} x{self.quantite}"
+
+
+class Image(models.Model):
+    slug = models.SlugField(default=uuid.uuid1)
+    image = models.ImageField(upload_to='uploads/article', null=True, blank=True)
+    archived = models.BooleanField(default=False)
+
+    def __str__(self):
+        return str(self.slug)
+
+
+class Promotion(models.Model):
+    slug = models.SlugField(default=uuid.uuid1, editable=False)
+    titre = models.CharField(max_length=20, null=True, blank=True)
+    vendeur = models.ForeignKey(Vendeur, on_delete=models.CASCADE)
+    taux = models.IntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    date_debut = models.DateField(null=True, blank=True)
+    date_fin = models.DateField(null=True, blank=True)
+    is_archived = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return self.titre or str(self.pk)
+
+
+class Categorie(models.Model):
+    slug = models.SlugField(default=uuid.uuid1)
+    nom = models.CharField(max_length=200)
+    description = models.TextField(null=True, blank=True)
+    # promotion = models.ForeignKey(
+    #     Promotion, on_delete=models.SET_NULL, null=True, blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    # images = models.FileField(upload_to='uploads/categori', null=True, blank=True)
+    is_archived = models.BooleanField(default=False)
+    vendeur = models.ForeignKey(Vendeur, on_delete=models.SET_NULL, null=True)
+
+    class Meta:
+        verbose_name = "Catégorie"
+        verbose_name_plural = "Catégories"
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return self.nom
+
+
+class Produit(models.Model):
+    slug = models.SlugField(default=uuid.uuid1)
+    nom = models.CharField(max_length=255)
+    description = models.TextField()
+    prix = models.DecimalField(decimal_places=2, max_digits=50)
+    promotion = models.ForeignKey(
+        Promotion, related_name="promotion", on_delete=models.SET_NULL, null=True, blank=True)
+    categorie = models.ForeignKey(
+        Categorie, on_delete=models.CASCADE, related_name='produit')
+    type = models.CharField(max_length=100, choices=TYPE_ARTICLES)
+    variations = models.ManyToManyField(
+        'Variation', blank=True, default=[], related_name="produits")
+    images = models.ManyToManyField(Image, blank=True, default=[])
+    seuil = models.IntegerField(default=0, blank=True, null=True)
+    stock = models.DecimalField(max_digits=50, decimal_places=2, default=0)
+    is_archived = models.BooleanField(default=False)
+    vendeur = models.ForeignKey(Vendeur, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    cout_de_revient = models.DecimalField(decimal_places=2, max_digits=50, default=0)
+    prix_avec_promo = models.DecimalField(max_digits=50, decimal_places=2, default=0)
+
+    class Meta:
+        verbose_name = "Produit"
+        verbose_name_plural = "Produits"
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return self.nom
+
+    def save(self, *args, **kwargs):
+        if self.promotion and self.promotion.date_fin and self.promotion.date_fin >= timezone.now().date():
+            self.prix_avec_promo = self.prix * (1 - (Decimal(self.promotion.taux) / 100))
+        super(Produit, self).save(*args, **kwargs)
+
+    def verify_stock(self, quantite, variations=None):
+        if self.stock < quantite:
+            return False
+        if variations:
+            try:
+                first_variation = variations[0]
+                variation_id = first_variation.id if isinstance(first_variation, Variation) else first_variation
+                variation = Variation.objects.get(id=variation_id)
+                if variation and variation.quantite < quantite:
+                    return False
+            except (Variation.DoesNotExist, IndexError):
+                return False
+        return True
+
+    def subtract_in_stock(self, quantite, variations):
+        self.stock -= Decimal(quantite)
+        if variations:
+            try:
+                first_variation = variations[0]
+                variation_id = first_variation.id if isinstance(first_variation, Variation) else first_variation
+                variation = Variation.objects.get(id=variation_id)
+                if variation:
+                    variation.quantite -= Decimal(quantite)
+                    variation.save()
+            except (Variation.DoesNotExist, IndexError):
+                pass
+        self.save()
+
+
+class Variation(models.Model):
+    slug = models.SlugField(default=uuid.uuid1)
+    taille = models.CharField(max_length=20, null=True, blank=True)
+    couleur = models.CharField(max_length=50, null=True)
+    quantite = models.DecimalField(max_digits=50, decimal_places=2, default=0)
+    seuil = models.IntegerField(default=0)
+    images = models.ManyToManyField(Image, default=[], blank=True)
+    active = models.BooleanField(default=False)
+    produit = models.ForeignKey(
+        Produit, on_delete=models.CASCADE, related_name='variation')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.taille or ''} {self.couleur or ''}".strip() or str(self.pk)
