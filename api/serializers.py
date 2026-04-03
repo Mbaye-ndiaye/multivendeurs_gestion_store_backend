@@ -1,4 +1,9 @@
 from rest_framework import serializers
+from decimal import Decimal
+from datetime import timedelta
+
+from django.utils import timezone
+
 from api.models import *
 
 
@@ -173,6 +178,113 @@ class VariationGetSerializer(serializers.ModelSerializer):
     class Meta:
         model = Variation
         fields = '__all__'
+
+
+class LigneFactureSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = LigneFacture
+        fields = ('id', 'quantite', 'designation', 'prix_unitaire', 'prix_total')
+
+
+class LigneFactureWriteSerializer(serializers.Serializer):
+    quantite = serializers.DecimalField(max_digits=50, decimal_places=2)
+    designation = serializers.CharField(max_length=500)
+    prix_unitaire = serializers.DecimalField(max_digits=50, decimal_places=2)
+    prix_total = serializers.DecimalField(max_digits=50, decimal_places=2)
+
+    def validate(self, data):
+        q = Decimal(str(data['quantite']))
+        pu = Decimal(str(data['prix_unitaire']))
+        pt = Decimal(str(data['prix_total']))
+        attendu = (q * pu).quantize(Decimal('0.01'))
+        if abs(pt - attendu) > Decimal('0.02'):
+            raise serializers.ValidationError(
+                "prix_total doit correspondre à quantite × prix_unitaire (tolérance 0,02)."
+            )
+        return data
+
+
+class FactureCreateSerializer(serializers.Serializer):
+    client_nom = serializers.CharField(max_length=500)
+    client_telephone = serializers.CharField(max_length=50)
+    reference = serializers.CharField(max_length=100)
+    lignes = LigneFactureWriteSerializer(many=True)
+    date_facture = serializers.DateField(required=False)
+    date_echeance = serializers.DateField(required=False)
+    remise = serializers.DecimalField(
+        max_digits=50, decimal_places=2, required=False, default=0)
+    paid_statut = serializers.ChoiceField(
+        choices=FACTURE_PAID_STATUT, required=False, default=FACTURE_NON_PAYEE)
+
+    def validate_lignes(self, value):
+        if not value:
+            raise serializers.ValidationError("Au moins une ligne est requise.")
+        return value
+
+    def create(self, validated_data):
+        lignes_data = validated_data.pop('lignes')
+        vendeur = self.context['vendeur']
+        dtf = validated_data.pop('date_facture', None)
+        dte = validated_data.pop('date_echeance', None)
+        remise = validated_data.pop('remise', Decimal('0'))
+        paid_statut = validated_data.pop('paid_statut', FACTURE_NON_PAYEE)
+        if dtf is None:
+            dtf = timezone.now().date()
+        if dte is None:
+            dte = dtf + timedelta(days=30)
+        total = Decimal('0')
+        for ligne in lignes_data:
+            total += Decimal(str(ligne['prix_total']))
+        facture = Facture.objects.create(
+            vendeur=vendeur,
+            client_nom=validated_data['client_nom'],
+            client_telephone=validated_data['client_telephone'],
+            reference=validated_data['reference'],
+            total_general=total,
+            date_facture=dtf,
+            date_echeance=dte,
+            remise=remise,
+            paid_statut=paid_statut,
+        )
+        for ligne in lignes_data:
+            LigneFacture.objects.create(facture=facture, **ligne)
+        return facture
+
+
+class FactureDetailSerializer(serializers.ModelSerializer):
+    lignes = LigneFactureSerializer(many=True, read_only=True)
+    signature_vendeur = serializers.SerializerMethodField()
+    facture_pdf_url = serializers.SerializerMethodField()
+    nom_boutique = serializers.CharField(source='vendeur.nom_de_la_boutique', read_only=True)
+    montant_total_apres_remise = serializers.ReadOnlyField()
+
+    class Meta:
+        model = Facture
+        fields = (
+            'slug', 'reference', 'client_nom', 'client_telephone',
+            'nom_boutique', 'signature_vendeur', 'lignes', 'total_general',
+            'date_facture', 'date_echeance', 'remise', 'paid_statut',
+            'montant_total_apres_remise', 'facture_pdf_url', 'created_at',
+        )
+
+    def get_signature_vendeur(self, obj):
+        v = obj.vendeur
+        if not v.signature:
+            return None
+        request = self.context.get('request')
+        url = v.signature.url
+        if request:
+            return request.build_absolute_uri(url)
+        return url
+
+    def get_facture_pdf_url(self, obj):
+        if not obj.facture_pdf:
+            return None
+        request = self.context.get('request')
+        u = obj.facture_pdf.url
+        if request:
+            return request.build_absolute_uri(u)
+        return u
 
 # class OrderItemSerializer(serializers.ModelSerializer):
 #     class Meta:

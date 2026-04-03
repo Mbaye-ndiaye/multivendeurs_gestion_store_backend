@@ -5,6 +5,7 @@ from django.contrib.auth.hashers import make_password
 from django.conf import settings
 from django.utils import timezone
 from django.db.models import Q, Sum
+from django.db import IntegrityError, transaction
 from datetime import timedelta
 import random
 from decimal import Decimal
@@ -13,6 +14,7 @@ from easy_password_generator import PassGen
 from api.models import *
 from api.serializers import *
 from api.email_utils import send_vendeur_credentials, send_otp_email, send_password_reset_email
+from api.facture_pdf import generer_facture_pdf
 from api.pagination import KgPagination
 from api.images import get_images
 from rest_framework_tracking.mixins import LoggingMixin, BaseLoggingMixin
@@ -22,7 +24,12 @@ from api.utils import Utils
 from django.utils.decorators import method_decorator
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly
+from rest_framework import generics, status
+from rest_framework.response import Response
+from rest_framework.permissions import AllowAny
+import logging
 
+logger = logging.getLogger(__name__)
 def get_jwt_for_user(user):
     """Return an access token string for the given user."""
     refresh = RefreshToken.for_user(user)
@@ -105,12 +112,7 @@ class LoginView(LoggingMixin, generics.CreateAPIView):
             return Response({"message": "Votre mot de passe est requis"}, status=401)
         
 
-from rest_framework import generics, status
-from rest_framework.response import Response
-from rest_framework.permissions import AllowAny
-import logging
 
-logger = logging.getLogger(__name__)
 
 # class CreateSuperAdminView(generics.GenericAPIView):
 #     permission_classes = [AllowAny]
@@ -675,4 +677,62 @@ class VariationAPIListView(generics.CreateAPIView):
             item.produit.save()
             return Response(serializer.data, status=201)
         return Response(serializer.errors, status=400)
+
+
+class FactureListCreateAPIView(LoggingMixin, generics.GenericAPIView):
+    """
+    Liste et création de factures pour le vendeur connecté (JWT).
+    GET : liste des factures du vendeur.
+    POST : crée une facture avec client (nom, téléphone, référence), lignes
+    (quantité, désignation, prix_unitaire, prix_total), total calculé en base.
+    Réponse détail : signature_vendeur (URL absolue si image définie sur le compte vendeur).
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        if request.user.user_type != VENDEUR:
+            return Response({"message": "Réservé aux vendeurs."}, status=status.HTTP_403_FORBIDDEN)
+        factures = Facture.objects.filter(vendeur_id=request.user.pk)
+        ser = FactureDetailSerializer(factures, many=True, context={'request': request})
+        return Response(ser.data)
+
+    def post(self, request, *args, **kwargs):
+        if request.user.user_type != VENDEUR:
+            return Response({"message": "Réservé aux vendeurs."}, status=status.HTTP_403_FORBIDDEN)
+        vendeur = Vendeur.objects.get(pk=request.user.pk)
+        serializer = FactureCreateSerializer(
+            data=request.data,
+            context={'vendeur': vendeur, 'request': request},
+        )
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            with transaction.atomic():
+                facture = serializer.save()
+        except IntegrityError:
+            return Response(
+                {"message": "Une facture avec cette référence existe déjà pour votre compte."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        # PDF Easymarket-style (template facturation.html + WeasyPrint), comme backend_easymarket_multivendor
+        generer_facture_pdf(facture)
+        facture.refresh_from_db()
+        return Response(
+            FactureDetailSerializer(facture, context={'request': request}).data,
+            status=status.HTTP_201_CREATED,
+        )
+
+
+class FactureDetailAPIView(LoggingMixin, generics.GenericAPIView):
+    """Détail d'une facture par slug (même vendeur uniquement)."""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, slug, *args, **kwargs):
+        try:
+            facture = Facture.objects.get(slug=slug)
+        except Facture.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        if request.user.user_type != VENDEUR or facture.vendeur_id != request.user.id:
+            return Response({"message": "Non autorisé."}, status=status.HTTP_403_FORBIDDEN)
+        return Response(FactureDetailSerializer(facture, context={'request': request}).data)
 

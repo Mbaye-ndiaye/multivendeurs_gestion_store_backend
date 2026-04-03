@@ -67,6 +67,19 @@ ADMIN_TYPE = (
     (SUPERADMIN, SUPERADMIN)
 )
 
+FACTURE_PAYEE = 'payée'
+FACTURE_NON_PAYEE = 'non payée'
+FACTURE_PARTIELLEMENT = 'partiellement payée'
+FACTURE_PAID_STATUT = (
+    (FACTURE_PAYEE, FACTURE_PAYEE),
+    (FACTURE_NON_PAYEE, FACTURE_NON_PAYEE),
+    (FACTURE_PARTIELLEMENT, FACTURE_PARTIELLEMENT),
+)
+
+
+def _date_aujourdhui():
+    return timezone.now().date()
+
 TAILLE_UNIQUE = "taille_unique"
 TAILLE_VARIABLE = "taille_variable"
 TAILLE_UNIQUE_AVEC_COULEUR = "taille_unique_avec_couleur"
@@ -261,6 +274,56 @@ class PasswordResetToken(models.Model):
 
     def is_valid(self):
         return not self.used and timezone.now() < self.expires_at
+
+
+class Facture(models.Model):
+    """
+    Facture émise par un vendeur : en-tête client + référence, total, lignes détaillées.
+    La signature du vendeur est l'image `User.signature` (héritée par Vendeur).
+    PDF généré comme Easymarket (template facturation.html + WeasyPrint).
+    """
+    slug = models.SlugField(default=uuid.uuid1)
+    reference = models.CharField(max_length=100)
+    client_nom = models.CharField(max_length=500)
+    client_telephone = models.CharField(max_length=50)
+    vendeur = models.ForeignKey(Vendeur, on_delete=models.CASCADE, related_name='factures')
+    total_general = models.DecimalField(max_digits=50, decimal_places=2, default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    date_facture = models.DateField(default=_date_aujourdhui)
+    date_echeance = models.DateField(default=_date_aujourdhui)
+    remise = models.DecimalField(max_digits=50, decimal_places=2, default=0)
+    paid_statut = models.CharField(
+        max_length=40, choices=FACTURE_PAID_STATUT, default=FACTURE_NON_PAYEE)
+    facture_pdf = models.FileField(upload_to='factures/pdfs/', null=True, blank=True)
+
+    class Meta:
+        verbose_name = "Facture"
+        verbose_name_plural = "Factures"
+        ordering = ['-created_at']
+        unique_together = [['vendeur', 'reference']]
+
+    def __str__(self):
+        return f"{self.reference} ({self.client_nom})"
+
+    @property
+    def montant_total_apres_remise(self):
+        return self.total_general - (self.remise or Decimal('0'))
+
+
+class LigneFacture(models.Model):
+    facture = models.ForeignKey(Facture, on_delete=models.CASCADE, related_name='lignes')
+    quantite = models.DecimalField(max_digits=50, decimal_places=2)
+    designation = models.CharField(max_length=500)
+    prix_unitaire = models.DecimalField(max_digits=50, decimal_places=2)
+    prix_total = models.DecimalField(max_digits=50, decimal_places=2)
+
+    class Meta:
+        verbose_name = "Ligne de facture"
+        verbose_name_plural = "Lignes de facture"
+        ordering = ['id']
+
+    def __str__(self):
+        return f"{self.designation} x{self.quantite}"
 
 
 class Image(models.Model):
