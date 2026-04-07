@@ -490,7 +490,7 @@ class ProduitAPIListView(generics.ListCreateAPIView):
     """POST /api/produits/ — création produit (avec images optionnelles)."""
     queryset = Produit.objects.all()
     serializer_class = ProduitSerializer
-    permission_classes = [IsAuthenticated]
+
 
     def post(self, request, format=None):
         nom = request.data.get('nom')
@@ -679,7 +679,7 @@ class VariationAPIListView(generics.CreateAPIView):
         return Response(serializer.errors, status=400)
 
 
-class FactureListCreateAPIView(LoggingMixin, generics.GenericAPIView):
+class FactureListCreateAPIView(generics.GenericAPIView):
     """
     Liste et création de factures pour le vendeur connecté (JWT).
     GET : liste des factures du vendeur.
@@ -687,7 +687,6 @@ class FactureListCreateAPIView(LoggingMixin, generics.GenericAPIView):
     (quantité, désignation, prix_unitaire, prix_total), total calculé en base.
     Réponse détail : signature_vendeur (URL absolue si image définie sur le compte vendeur).
     """
-    permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
         if request.user.user_type != VENDEUR:
@@ -723,9 +722,10 @@ class FactureListCreateAPIView(LoggingMixin, generics.GenericAPIView):
         )
 
 
-class FactureDetailAPIView(LoggingMixin, generics.GenericAPIView):
+class FactureDetailAPIView(generics.GenericAPIView):
     """Détail d'une facture par slug (même vendeur uniquement)."""
-    permission_classes = [IsAuthenticated]
+    queryset = Facture.objects.all()
+    serializer_class = FactureDetailSerializer
 
     def get(self, request, slug, *args, **kwargs):
         try:

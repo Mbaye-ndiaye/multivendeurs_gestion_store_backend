@@ -27,8 +27,8 @@ SECRET_KEY = os.environ.get("SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["multivendeurs-gestion-store-backend.onrender.com", "*"]
-# ALLOWED_HOSTS = ["*"]
+# ALLOWED_HOSTS = ["multivendeurs-gestion-store-backend.onrender.com", "*"]
+ALLOWED_HOSTS = ["*"]
 
 
 
@@ -99,16 +99,16 @@ REST_FRAMEWORK = {
     'PAGE_SIZE': 10,
 }
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.postgresql',
-#         'NAME': os.environ.get('DB_NAME'),
-#         'USER': os.environ.get('DB_USER'),
-#         'PASSWORD': os.environ.get('DB_PASSWORD'),
-#         'HOST': os.environ.get('DB_HOST'),
-#         'PORT': os.environ.get('DB_PORT'),
-#     }
-# }
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.environ.get('DB_NAME'),
+        'USER': os.environ.get('DB_USER'),
+        'PASSWORD': os.environ.get('DB_PASSWORD'),
+        'HOST': os.environ.get('DB_HOST'),
+        'PORT': os.environ.get('DB_PORT'),
+    }
+}
 
 # Custom Simple JWT settings (optionnel)
 SIMPLE_JWT = {
@@ -120,13 +120,13 @@ SIMPLE_JWT = {
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
-DATABASES = {
-    'default': dj_database_url.config(
-        default=os.environ.get("DATABASE_URL"),
-        conn_max_age=600,
-        ssl_require=True
-    )
-}
+# DATABASES = {
+#     'default': dj_database_url.config(
+#         default=os.environ.get("DATABASE_URL"),
+#         conn_max_age=600,
+#         ssl_require=True
+#     )
+# }
 
 
 # Password validation
@@ -217,6 +217,20 @@ CSRF_TRUSTED_ORIGINS = [
     "http://127.0.0.1",
     "http://localhost:3000",
 ]
+# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_HOST = 'smtp.gmail.com'
+# EMAIL_USE_TLS = True
+# EMAIL_PORT = 587
+# EMAIL_HOST_USER = 'babacarndiay546@gmail.com'
+# EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
+# EMAIL_USE_SSL = False
+# EMAIL_TIMEOUT = 20
+# EMAIL_SSL_KEYFILE = None
+# EMAIL_SSL_CERTFILE = None
+# APP_NAME = os.environ.get('APP_NAME')
+# EMAIL_TIMEOUT = 20
+
+# Configuration email alignée sur backend_easymarket_multivendor
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_USE_TLS = True
@@ -227,6 +241,4 @@ EMAIL_USE_SSL = False
 EMAIL_TIMEOUT = 20
 EMAIL_SSL_KEYFILE = None
 EMAIL_SSL_CERTFILE = None
-APP_NAME = os.environ.get('APP_NAME')
-
-EMAIL_TIMEOUT = 20
+APP_NAME = os.environ.get('APP_NAME', 'EASY MARKET')
