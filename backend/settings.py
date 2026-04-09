@@ -58,7 +58,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    
+    'api.middleware.ErrorLoggingMiddleware',
 ]
 
 ROOT_URLCONF = 'backend.urls'
@@ -241,3 +241,22 @@ EMAIL_TIMEOUT = 20
 EMAIL_SSL_KEYFILE = None
 EMAIL_SSL_CERTFILE = None
 APP_NAME = os.environ.get('APP_NAME', 'GESTION STOCK')
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "file": {
+            "level": "ERROR",
+            "class": "logging.FileHandler",
+            "filename": "django.log",  # Log file path
+        },
+    },
+    "loggers": {
+        "django": {
+            "handlers": ["file"],
+            "level": "ERROR",
+            "propagate": True,
+        },
+    },
+}
