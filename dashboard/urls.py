@@ -4,6 +4,7 @@ from . import views
 
 urlpatterns = [
     # Authentification SuperAdmin
+    path("login/", views.loginPage, name="login"),
     path("login/", views.loginPage, name="dashboard-login"),
     path("logout/", views.logOutUser, name="dashboard-logout"),
 
