@@ -7,6 +7,7 @@ from .models import (
     Categorie,
     Produit,
     Variation,
+    Service
 )
 
 admin.site.register(User)
@@ -16,3 +17,4 @@ admin.site.register(Promotion)
 admin.site.register(Categorie)
 admin.site.register(Produit)
 admin.site.register(Variation)
+admin.site.register(Service)

@@ -12,6 +12,9 @@ urlpatterns = [
     path('logout/', views.LogoutView.as_view()),
     path('forgot-password/', views.ForgotPasswordView.as_view()),
     path('reset-password/', views.ResetPasswordView.as_view()),
+    
+    # Création de comptes vendeurs
+    path('vendeurs/', views.VendeurRegisterAPIListView.as_view(), name='vendeur-register'),
 
     # Vendeurs
     # path('vendeurs/', views.VendeurAPIListView.as_view(), name='api-vendors-list'),

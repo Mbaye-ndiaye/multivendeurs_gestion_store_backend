@@ -1,0 +1,53 @@
+{% extends 'dashboard/base.html' %}
+
+{% block content %}
+<div class="row">
+    <div class="d-flex justify-content-around">
+
+        <h1 class="mr-5">Liste des Administrateur
+        </h1>
+         <a href="{% url 'add-admin' %}" class="btn btn-primary btn-lg">Ajouter Administrateur</a> 
+    </div>
+    <table class="table table-striped mt-4">
+        <thead>
+          <tr>
+            <th scope="col">Statut</th>
+            <th scope="col">Nom</th>
+
+            <th scope="col">Email</th>
+            <th scope="col">Téléphone</th>
+
+
+            <!-- <th scope="col">Boutique</th>
+            
+            <th scope="col">Domaine</th> -->
+            <!-- <th scope="col">Action</th>
+            <th scope="col">Plus de détails</th> -->
+
+
+          </tr>
+        </thead>
+        <tbody>
+            {% for admin in admins  %}
+
+            <tr>
+            {% if admin.is_active %}
+              <td class="text-success">Actif</td>
+            {% else %}
+              <td class="text-danger">Inactif</td>
+            {% endif %}
+            <td>{{admin.prenom}} {{admin.nom}}</td>
+            <td>{{admin.email}}</td>
+            <!-- <td>{{admin.telephone}}</td> -->
+            <td class="text-align-center">{{admin.telephone}}</td>
+            <!-- <td><button type="" style="border: none; background: none;" data-container="body" data-toggle="popover" data-placement="top" data-content="{{admin.api_key}}" >
+              <i class="fas fa-eye"></i>
+            </button></td> -->
+            <!-- <td>{{vendeur.domaine}}</td> -->
+
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table> 
+</div>
+{% endblock %}

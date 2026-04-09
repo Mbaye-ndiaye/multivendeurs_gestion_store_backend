@@ -1,6 +1,12 @@
 import base64
 import os
 import re
+from dotenv import load_dotenv
+
+load_dotenv()
+
+# Aligné sur backend_easymarket_multivendor (utilisé par dashboard.views)
+REGEX = os.environ.get("regex")
 
 
 class Utils:

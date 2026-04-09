@@ -1,49 +1,50 @@
-# """
-# Envoi d'emails (identifiants vendeur, etc.).
-# """
-# import logging
-# from django.core.mail import send_mail
-# from django.conf import settings
-# from django.http import HttpResponse
+"""
+Envoi d'emails (identifiants vendeur, etc.).
+"""
+import logging
+from django.core.mail import send_mail
+from django.conf import settings
+from django.http import HttpResponse
 
-# # from backend.settings import EMAIL_HOST_USER
-# from django.core.mail import EmailMultiAlternatives
-# from mimetypes import MimeTypes
-# from django.utils.html import strip_tags
-# from django.template.loader import render_to_string
+# from backend.settings import EMAIL_HOST_USER
+from django.core.mail import EmailMultiAlternatives
+from mimetypes import MimeTypes
+from django.utils.html import strip_tags
+from django.template.loader import render_to_string
 
-# logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 
-# def send_vendeur_credentials(vendeur, plain_password):
-#     """
-#     Envoie au vendeur un email avec ses identifiants de connexion (email + mot de passe).
-#     Retourne True si l'envoi a réussi, False sinon.
-#     """
-#     subject = "Vos identifiants - Espace vendeur"
-#     message = (
-#         f"Bonjour {vendeur.prenom or ''} {vendeur.nom or ''},\n\n"
-#         "Votre compte vendeur a été créé. Voici vos identifiants de connexion :\n\n"
-#         f"Email (identifiant) : {vendeur.email}\n"
-#         f"Mot de passe : {plain_password}\n\n"
-#         "Nous vous recommandons de modifier ce mot de passe lors de votre première connexion.\n\n"
-#         "Cordialement,\n"
-#         "L'équipe Gestion Store"
-#     )
-#     try:
-#         send_mail(
-#             subject=subject,
-#             message=message,
-#             from_email=settings.EMAIL_HOST_USER,
-#             recipient_list=[vendeur.email],
-#             fail_silently=False,
-#         )
-#         logger.info("Email identifiants envoyé avec succès à %s", vendeur.email)
-#         return True
-#     except Exception as e:
-#         logger.error("Erreur envoi email à %s: %s", vendeur.email, str(e))
-#         print(f"\n[ERREUR EMAIL] {vendeur.email}: {e}\n")  # Visible dans la console du serveur
-#         return False
+def send_vendeur_credentials(email, plain_password, boutique_name):
+    """
+    Envoie au vendeur un email avec ses identifiants de connexion (email + mot de passe).
+    Retourne True si l'envoi a réussi, False sinon.
+    """
+    subject = "Vos identifiants - Espace vendeur"
+    message = (
+        f"Bonjour,\n\n"
+        f"Votre compte vendeur pour la boutique '{boutique_name}' a été créé. "
+        "Voici vos identifiants de connexion :\n\n"
+        f"Email (identifiant) : {email}\n"
+        f"Mot de passe : {plain_password}\n\n"
+        "Nous vous recommandons de modifier ce mot de passe lors de votre première connexion.\n\n"
+        "Cordialement,\n"
+        "L'équipe Gestion Stock"
+    )
+    try:
+        send_mail(
+            subject=subject,
+            message=message,
+            from_email=getattr(settings, 'EMAIL_HOST_USER', 'noreply@gestionstock.com'),
+            recipient_list=[email],
+            fail_silently=False,
+        )
+        logger.info("Email identifiants envoyé avec succès à %s", email)
+        return True
+    except Exception as e:
+        logger.error("Erreur envoi email à %s: %s", email, str(e))
+        print(f"\n[ERREUR EMAIL] {email}: {e}\n")  # Visible dans la console du serveur
+        return False
 #     # def test_email(request):
 #     #     send_mail(
 #     #     "Test",
@@ -181,7 +182,7 @@ logger = logging.getLogger(__name__)
 
 def send_vendeur_credentials(vendeur, plain_password):
     subject = "Vos identifiants - Espace vendeur"
-    app_name = getattr(settings, 'APP_NAME', 'EASY MARKET')
+    app_name = getattr(settings, 'APP_NAME', 'GESTION STOCK')
     message = (
         f"Bonjour {vendeur.prenom or ''} {vendeur.nom or ''},\n\n"
         "Votre compte vendeur a ete cree. Voici vos identifiants de connexion :\n\n"
@@ -207,7 +208,7 @@ def send_vendeur_credentials(vendeur, plain_password):
 
 
 def send_otp_email(user, code):
-    app_name = getattr(settings, 'APP_NAME', None) or 'EASY MARKET'
+    app_name = getattr(settings, 'APP_NAME', None) or 'GESTION STOCK'
     subject = f"Votre code de verification - {app_name}"
     message = (
         f"Bonjour {user.prenom or ''} {user.nom or ''},\n\n"
@@ -232,7 +233,7 @@ def send_otp_email(user, code):
 
 
 def send_password_reset_email(user, reset_token):
-    app_name = getattr(settings, 'APP_NAME', None) or 'EASY MARKET'
+    app_name = getattr(settings, 'APP_NAME', None) or 'GESTION STOCK'
     subject = f"Reinitialisation de votre mot de passe - {app_name}"
     reset_url = f"http://localhost:8000/dashboard/reset-password/{reset_token}/"
     message = (

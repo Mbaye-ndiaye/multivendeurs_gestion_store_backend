@@ -53,14 +53,14 @@ CURRENCY = (
 #     (FLOOZ, FLOOZ),
 # )
 
-# EMAIL = 'EMAIL'
-# SMS = 'SMS'
-# AUTRE = 'AUTRE'
-# SERVICES = (
-#     (EMAIL, EMAIL),
-#     (SMS, SMS),
-#     (AUTRE, AUTRE)
-# )
+EMAIL = 'EMAIL'
+SMS = 'SMS'
+AUTRE = 'AUTRE'
+SERVICES = (
+    (EMAIL, EMAIL),
+    (SMS, SMS),
+    (AUTRE, AUTRE)
+)
 
 ADMIN_TYPE = (
     (ADMIN, ADMIN),
@@ -183,9 +183,12 @@ class Vendeur(User):
     Permet d'avoir un système d'authentification complet pour les vendeurs.
     """
     nom_de_la_boutique = models.CharField(max_length=200)
-    # couleur = models.CharField(max_length=50, blank=True, null=True)
+    couleur = models.CharField(max_length=50, blank=True, null=True)
     domaine = models.CharField(max_length=200, blank=True, null=True)
     devise = models.CharField(max_length=20, choices=CURRENCY, default=XOF)
+    nb_vendeur_a_ajouter = models.IntegerField(default=2)
+    service = models.ForeignKey('api.Service', null=True, blank=True,
+                                related_name='vendeur_service', on_delete=models.CASCADE)
 
     # ---------- Champs à décommenter quand vous en avez besoin ----------
     # api_key (hashée en base, générée au save si vide)
@@ -333,6 +336,23 @@ class Image(models.Model):
 
     def __str__(self):
         return str(self.slug)
+    
+
+class Service(models.Model):
+    slug = models.SlugField(default=uuid.uuid1)
+    nom = models.CharField(max_length=120)
+    type_service = models.CharField(
+        max_length=120, choices=SERVICES, default=EMAIL)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return self.nom
+
+
 
 
 class Promotion(models.Model):
@@ -360,7 +380,7 @@ class Categorie(models.Model):
     #     Promotion, on_delete=models.SET_NULL, null=True, blank=True)
     updated_at = models.DateTimeField(auto_now=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    # images = models.FileField(upload_to='uploads/categori', null=True, blank=True)
+    images = models.FileField(upload_to='uploads/categori', null=True, blank=True)
     is_archived = models.BooleanField(default=False)
     vendeur = models.ForeignKey(Vendeur, on_delete=models.SET_NULL, null=True)
 

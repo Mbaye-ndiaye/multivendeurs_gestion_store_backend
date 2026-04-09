@@ -2,51 +2,67 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>{{ sujet }}</title>
+    <title>Email Template</title>
     <style type="text/css">
         @media only screen and (max-width: 600px) {
-            .container { width: 100% !important; }
+            .container {
+                width: 100% !important;
+            }
         }
     </style>
 </head>
 <body style="font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f9f9f9;">
+
     <table class="container" cellpadding="0" cellspacing="0" border="0" align="center" width="600" style="max-width: 100%; margin: 0 auto; background-color: #ffffff; border: 1px solid #e5e5e5;">
+        <!-- <tr>
+            <td align="center" bgcolor="#FFFFFF" style="padding: 20px;">
+                <img src="https://medias-hub-server.volkeno-engineering.click/medias/mondocteur/LogoMonDocteurOfficiel.png" alt="Logo" width="150" >
+            </td>
+        </tr> -->
         <tr>
             <td align="center" bgcolor="#ffffff" style="padding: 20px;">
-                <h1 style="color: #333333; margin-bottom: 20px;">{{ sujet }}</h1>
-                <p style="color: #555555; font-size: 16px; line-height: 1.5; text-align: left;">
-                    Bonjour <strong>{{ prenom }} {{ nom }}</strong>,
-                </p>
-                <p style="color: #555555; font-size: 16px; line-height: 1.5; text-align: left;">
-                    {{ contenu }}
-                </p>
-                {% if id == "true" %}
-                <div style="margin-top: 20px; padding: 15px; background-color: #f5f5f5; border-radius: 5px;">
-                    <p style="color: #333333; font-size: 16px; font-weight: bold; margin-bottom: 10px;">Vos informations de connexion :</p>
-                    <ul style="color: #555555; font-size: 16px; line-height: 1.8; text-align: left; margin: 0; padding-left: 20px;">
-                        <li><strong>Email :</strong> {{ email }}</li>
-                        <li><strong>Mot de passe :</strong> {{ password }}</li>
-                    </ul>
-                    <p style="color: #888888; font-size: 12px; margin-top: 15px;">
-                        Pour des raisons de sécurité, nous vous recommandons de changer ce mot de passe lors de votre première connexion.
-                    </p>
-                </div>
+                <h1 style="color: #333333; margin-bottom: 20px;">{{sujet}}</h1>
+                <p style="color: #555555; font-size: 16px; line-height: 1.5; text-align: left;">Bonjour <span style="font-weight: 850;">{% if idts == "true" %}
+                    {{prenom}}  {{nom}},
+                    {{content}}
+                </span></p>
+               
+                <!-- <p style="color: #555555; font-size: 14px; line-height: 1.5;">If you have any questions or need assistance, feel free to reach out to our support team.</p> -->
+                {%endif%}
+                {% if response_contact == "true" %}
+                <p style="color: #555555; font-size: 14px; line-height: 1.5; text-align: left;">En réponse à votre message [<i> {{message}} </i>] :<span style="font-family: 'Times New Roman',Times, serif;"><strong>{{response}}</strong> </span></p>
+                <p style="color: #555555; font-size: 14px; line-height: 1.5; text-align: left;"> J'espère que cela répond à votre préocupation. Si vous avez besoin de plus d'informations ou si vous avez d'autres questions, n'hésitez pas à me contacter à nouveau. </p>
+                <p style="color: #555555; font-size: 14px; line-height: 1.5; text-align: left;">Je vous remercie encore pour votre intérêt et j'espère avoir l'occasion de discuter avec vous à nouveau.</p>
+                {% else %}
+                    <p style="color: #555555; font-size: 14px; line-height: 1.5; text-align: left;">{{contenu}} </p>
                 {% endif %}
-                <p style="color: #555555; font-size: 14px; line-height: 1.5; margin-top: 20px; text-align: left; font-weight: bold;">
-                    Cordialement !
-                </p>
-                <p style="color: #555555; font-size: 14px; line-height: 1.5; text-align: left; font-weight: bold;">
-                    Équipe {{ APP_NAMES }}
-                </p>
+                {% if id == "true" %}
+                    <div>
+                        <p style="color: #555555; font-size: 16px; line-height: 1.5; margin-top: 20px; text-align: left;">Voici vos informations de connexion:</p>
+                        <ul style="color: #555555; font-size: 16px; line-height: 1.5; text-align: left;">
+                            <li>Email: {{ user.email }}</li>
+                            <li>Mot de passe: {{ password }}</li>
+                        </ul>
+                    </div> 
+                    <table cellpadding="0" cellspacing="0" border="0" align="center" style="margin-top: 30px;">
+                        <tr>
+                            <!-- <td align="center" bgcolor="#F37AOA" style="padding: 10px 30px; border: 2px solid #ffffff; border-radius: 50px;">
+                                <a href="{{APP_NAMES}}" target="_blank" style="color: #ffffff; font-size: 14px; text-decoration: none; font-weight: bold;">Connectez-vous</a>
+                            </td> -->
+                        </tr>
+                    </table>
+                {% endif %}
+
+                <p style="color: #555555; font-size: 14px; line-height: 1.5; margin-top: 20px; text-align: left;font-weight: bold;">Cordialement!</p>
+                <p style="color: #555555; font-size: 14px; line-height: 1.5; text-align: left;font-weight: bold;">Equipe {{APP_NAMES}}</p>
             </td>
         </tr>
         <tr>
-            <td align="center" bgcolor="#343a40" style="padding: 15px; border-top: 1px solid #e5e5e5;">
-                <p style="color: #ffffff; font-size: 12px; margin: 0;">
-                    &copy; {{ year }} {{ APP_NAMES }}. Tous droits réservés.
-                </p>
+            <td align="center" bgcolor="#FDDABB" style="padding: 20px; border-top: 1px solid #e5e5e5;">
+                <p style="color: #ffffff; font-size: 14px; line-height: 1.5; font-weight: 600;">&copy; {{year}} {{APP_NAMES}}. Tout droits réservés.</p>
             </td>
         </tr>
     </table>
+
 </body>
 </html>

@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from rest_framework.serializers import ModelSerializer
 from decimal import Decimal
 from datetime import timedelta
 
@@ -179,6 +180,19 @@ class VariationGetSerializer(serializers.ModelSerializer):
         model = Variation
         fields = '__all__'
 
+class ServiceSerializer(ModelSerializer):
+
+    class Meta:
+        model = Service
+        fields = '__all__'
+
+
+class ServiceGetSerializer(ModelSerializer):
+
+    class Meta:
+        model = Service
+        fields = '__all__'
+
 
 class LigneFactureSerializer(serializers.ModelSerializer):
     class Meta:
@@ -249,6 +263,23 @@ class FactureCreateSerializer(serializers.Serializer):
         for ligne in lignes_data:
             LigneFacture.objects.create(facture=facture, **ligne)
         return facture
+
+
+class VendeurRegisterSerializer(serializers.ModelSerializer):
+    user_type = serializers.CharField(read_only=True, default=VENDEUR)
+    
+    class Meta:
+        model = Vendeur
+        exclude = (
+            'user_permissions', 'groups', 'is_superuser', 'is_staff')
+
+    def create(self, validated_data, **extra_fields):
+        vendeur = self.Meta.model(**validated_data)
+        vendeur.set_password(validated_data['password'])
+        vendeur.is_active = True
+        vendeur.user_type = VENDEUR
+        vendeur.save()
+        return vendeur
 
 
 class FactureDetailSerializer(serializers.ModelSerializer):

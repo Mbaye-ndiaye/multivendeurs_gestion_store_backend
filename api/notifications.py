@@ -1,127 +1,218 @@
+# -*- coding: utf-8 -*-
 from django.template.loader import render_to_string
 from django.core.mail import EmailMultiAlternatives
+from mimetypes import MimeTypes
 from django.utils.html import strip_tags
 from django.conf import settings
-from mimetypes import MimeTypes
+import requests
+import json
 import logging
 
+
+# Configuration du logger
 logger = logging.getLogger(__name__)
 
+# Ne pas créer la connexion au niveau du module pour éviter les problèmes de configuration
+FROM_EMAIL = None
+
+# Récupérer APP_NAME depuis les settings
+try:
+    APP_NAME = settings.APP_NAME
+except:
+    APP_NAME = "GESTION STOCK"
 
 
-APP_NAME = getattr(settings, 'APP_NAME', 'Gestion-Stock')
+class Notif():
 
-def send_email(subject, to, template_src, context_dict=None, file=None):
-    """
-    Envoie un email HTML au destinataire.
+    # def push_notif(to, title, body, data):
+    #     print(f"🔔 === DÉBUT NOTIFICATION PUSH ===")
+    #     print(f"📱 To: {to}")
+    #     print(f"📋 Title: {title}")
+    #     print(f"📄 Body: {body}")
+    #     print(f"📊 Data: {data}")
 
-    Args:
-        subject: Sujet de l'email
-        to: Adresse email du destinataire (str)
-        template_src: Chemin du template HTML (ex: 'mail_notification.html')
-        context_dict: Dictionnaire de contexte pour le template
-        file: Fichier à joindre (optionnel)
-    """
-    if context_dict is None:
-        context_dict = {}
+    #     # Vérifier si le token est valide
+    #     if not to or to == "" or to == []:
+    #         print("❌ ERREUR - Token vide ou invalide")
+    #         logger.error(f"Token de notification invalide: {to}")
+    #         return
 
-    try:
-        # Même logique que backend_easymarket_multivendor (Notif.send_email)
-        if hasattr(settings, 'EMAIL_HOST_USER') and getattr(settings, 'EMAIL_HOST_PASSWORD', None):
-            from_email = f'{APP_NAME} <{settings.EMAIL_HOST_USER}>'
-        else:
-            from_email = f'{APP_NAME} <noreply@babacarndiay546.com>'
-            logger.warning("EMAIL_HOST_USER ou EMAIL_HOST_PASSWORD non configuré. Email peut échouer.")
+    #     # Si c'est une liste, traiter chaque token
+    #     if isinstance(to, list):
+    #         print(f"📋 Envoi à {len(to)} destinataires")
+    #         for i, token in enumerate(to):
+    #             print(f"   [{i+1}/{len(to)}] Envoi à: {token[:20]}...")
+    #             Notif._send_single_push_notif(token, title, body, data)
+    #     else:
+    #         # Token unique
+    #         Notif._send_single_push_notif(to, title, body, data)
 
-        html_content = render_to_string(template_src, context_dict)
-        text_content = strip_tags(html_content)
+    # def _send_single_push_notif(token, title, body, data):
+    #     """Envoie une notification push à un seul token"""
+    #     print(f"📤 Envoi notification push à: {token[:20]}...")
 
-        msg = EmailMultiAlternatives(
-            subject,
-            text_content,
-            from_email,
-            [to],
-        )
+    #     message = {
+    #         "to": token,
+    #         "sound": "default",
+    #         "title": title,
+    #         "body": body,
+    #         "data": data
+    #     }
 
-        if file:
-            msg.attach(file.name, file.read(), file.content_type if hasattr(file, 'content_type') else 'application/octet-stream')
+    #     try:
+    #         print(f"🌐 Envoi vers Expo...")
+    #         response = requests.post(
+    #             "https://exp.host/--/api/v2/push/send",
+    #             headers={
+    #                 "Accept": "application/json",
+    #                 "Accept-encoding": "gzip, deflate",
+    #                 "Content-Type": "application/json"
+    #             },
+    #             data=json.dumps(message),
+    #             timeout=30
+    #         )
 
-        msg.attach_alternative(html_content, "text/html")
-        msg.send()
+    #         print(f"✅ Réponse Expo: {response.status_code}")
+    #         if response.status_code == 200:
+    #             result = response.json()
+    #             print(f"📊 Résultat: {result}")
+    #             if 'data' in result and result['data'].get('status') == 'error':
+    #                 print(
+    #                     f"❌ Erreur Expo: {result['data'].get('message', 'Erreur inconnue')}")
+    #                 logger.error(
+    #                     f"Erreur Expo pour token {token[:20]}...: {result['data']}")
+    #             else:
+    #                 print(f"✅ Notification envoyée avec succès")
+    #                 logger.info(
+    #                     f"Notification push envoyée avec succès à {token[:20]}...")
+    #         else:
+    #             print(
+    #                 f"❌ Erreur HTTP: {response.status_code} - {response.text}")
+    #             logger.error(
+    #                 f"Erreur HTTP {response.status_code} pour token {token[:20]}...: {response.text}")
 
-        logger.info(f"Email envoyé avec succès à {to}")
-        return True
+    #     except requests.exceptions.Timeout:
+    #         print(f"⏰ Timeout lors de l'envoi à {token[:20]}...")
+    #         logger.error(
+    #             f"Timeout lors de l'envoi de notification push à {token[:20]}...")
+    #     except requests.exceptions.RequestException as e:
+    #         print(
+    #             f"❌ Erreur réseau lors de l'envoi à {token[:20]}...: {str(e)}")
+    #         logger.error(f"Erreur réseau pour token {token[:20]}...: {str(e)}")
+    #     except Exception as e:
+    #         print(
+    #             f"❌ Erreur inattendue lors de l'envoi à {token[:20]}...: {str(e)}")
+    #         logger.error(
+    #             f"Erreur inattendue pour token {token[:20]}...: {str(e)}")
 
-    except Exception as e:
-        logger.error(f"Erreur envoi email à {to}: {str(e)}")
-        return False
+    def send_email(APP_NAMES, subject, to, template_src, context_dict={}, file=None):
+        print(f"📧 === DÉBUT ENVOI EMAIL ===")
+        print(f"📨 To: {to}")
+        print(f"📋 Subject: {subject}")
+        print(f"📄 Template: {template_src}")
 
-
-class Notif:
-    """
-    Version alignée sur backend_easymarket_multivendor:
-    Notif.send_email(APP_NAMES, subject, to, template_src, context_dict, file)
-    """
-
-    def send_email(APP_NAMES, subject, to, template_src, context_dict=None, file=None):
-        if context_dict is None:
-            context_dict = {}
         try:
-            if hasattr(settings, 'EMAIL_HOST_USER') and getattr(settings, 'EMAIL_HOST_PASSWORD', None):
-                connection = None
+            # Configuration email conditionnelle
+            if hasattr(settings, 'EMAIL_HOST_USER') and hasattr(settings, 'EMAIL_HOST_PASSWORD'):
+                # Utiliser la configuration par défaut de Django
+                connection = None  # Laisser Django utiliser les settings par défaut
                 from_email = f'{APP_NAMES} <{settings.EMAIL_HOST_USER}>'
             else:
+                # En mode DEBUG, utiliser le backend console
                 connection = None
                 from_email = f'{APP_NAMES} <noreply@babacarndiay546.com>'
-
-            html_content = render_to_string(template_src, context_dict)
-            text_content = strip_tags(html_content)
-            msg = EmailMultiAlternatives(subject, text_content, from_email, [to], connection=connection)
+            print(f"📤 From: {from_email}")
 
             if file:
                 mime = MimeTypes()
-                file_type = mime.guess_type(file.url if hasattr(file, "url") else "")
-                content_type = file_type[0] if file_type and file_type[0] else 'application/octet-stream'
-                msg.attach(file.name, file.read(), content_type)
+                file_type = mime.guess_type(file.url)
+                # render with dynamic value
+                html_content = render_to_string(template_src, context_dict)
+                # Strip the html tag. So people can see the pure text at least.
+                text_content = strip_tags(html_content)
+                msg = EmailMultiAlternatives(subject, text_content, from_email,
+                                             [to], connection=connection)
+                msg.attach(file.name, file.read(), file_type[0])
+                msg.attach_alternative(html_content, "text/html")
+                msg.send()
+            else:
+                # render with dynamic value
+                html_content = render_to_string(template_src, context_dict)
+                # Strip the html tag. So people can see the pure text at least.
+                text_content = strip_tags(html_content)
+                msg = EmailMultiAlternatives(subject, text_content, from_email,
+                                             [to], connection=connection)
+                msg.attach_alternative(html_content, "text/html")
+                msg.send()
 
-            msg.attach_alternative(html_content, "text/html")
-            msg.send()
+            print(f"✅ Email envoyé avec succès à {to}")
             logger.info(f"Email envoyé avec succès à {to}")
-            return True
-        except Exception as e:
-            logger.error(f"Erreur envoi email à {to}: {str(e)}")
-            return False
 
-    def send_email_to_many(APP_NAMES, subject, emails, template_src, context_dict=None, file=None):
-        if context_dict is None:
-            context_dict = {}
+        except Exception as e:
+            print(f"❌ Erreur envoi email: {str(e)}")
+            logger.error(f"Erreur envoi email à {to}: {str(e)}")
+            # Ne pas faire échouer le processus principal
+            pass
+
+    def send_email_to_many(APP_NAMES, subject, emails, template_src, context_dict={},
+                           file=None):
+        print(f"📧 === DÉBUT ENVOI EMAILS MULTIPLES ===")
+        print(f"📨 To: {emails}")
+        print(f"📋 Subject: {subject}")
+        print(f"📄 Template: {template_src}")
+
         try:
-            if hasattr(settings, 'EMAIL_HOST_USER') and getattr(settings, 'EMAIL_HOST_PASSWORD', None):
-                connection = None
+            # Configuration email conditionnelle
+            if hasattr(settings, 'EMAIL_HOST_USER') and hasattr(settings, 'EMAIL_HOST_PASSWORD'):
+                # Utiliser la configuration par défaut de Django
+                connection = None  # Laisser Django utiliser les settings par défaut
                 from_email = f'{APP_NAMES} <{settings.EMAIL_HOST_USER}>'
             else:
+                # En mode DEBUG, utiliser le backend console
                 connection = None
-                from_email = f'{APP_NAMES} <noreply@babacarndiay546.com>'
-
-            html_content = render_to_string(template_src, context_dict)
-            text_content = strip_tags(html_content)
-            msg = EmailMultiAlternatives(subject, text_content, from_email, list(emails), connection=connection)
+                from_email = f'{APP_NAMES} <noreply@easymarket.com>'
+            print(f"📤 From: {from_email}")
 
             if file:
                 mime = MimeTypes()
-                file_type = mime.guess_type(file.url if hasattr(file, "url") else "")
-                content_type = file_type[0] if file_type and file_type[0] else 'application/octet-stream'
-                msg.attach(file.name, file.read(), content_type)
+                file_type = mime.guess_type(file.url)
+                # render with dynamic value
+                html_content = render_to_string(template_src, context_dict)
+                # Strip the html tag. So people can see the pure text at least.
+                text_content = strip_tags(html_content)
+                msg = EmailMultiAlternatives(subject, text_content, from_email,
+                                             list(emails), connection=connection)
+                msg.attach(file.name, file.read(), file_type[0])
+                msg.attach_alternative(html_content, "text/html")
+                msg.send()
+            else:
+                # render with dynamic value
+                html_content = render_to_string(template_src, context_dict)
+                # Strip the html tag. So people can see the pure text at least.
+                text_content = strip_tags(html_content)
+                msg = EmailMultiAlternatives(subject, text_content, from_email,
+                                             list(emails), connection=connection)
+                msg.attach_alternative(html_content, "text/html")
+                msg.send()
 
-            msg.attach_alternative(html_content, "text/html")
-            msg.send()
-            logger.info(f"Emails envoyés avec succès à {len(emails)} destinataires")
-            return True
+            print(
+                f"✅ Emails envoyés avec succès à {len(emails)} destinataires")
+            logger.info(
+                f"Emails envoyés avec succès à {len(emails)} destinataires")
+
         except Exception as e:
+            print(f"❌ Erreur envoi emails: {str(e)}")
             logger.error(f"Erreur envoi emails à {emails}: {str(e)}")
-            return False
+            # Ne pas faire échouer le processus principal
+            pass
 
     def notify_admins(admins, subject, template_src, context_dict):
-        for admin in admins:
+        print(f"👥 === NOTIFICATION ADMINS ===")
+        print(f"👤 Nombre d'admins: {len(admins)}")
+        print(f"📋 Subject: {subject}")
+
+        for i, admin in enumerate(admins):
+            print(f"📧 [{i+1}/{len(admins)}] Envoi à admin: {admin.email}")
             context_dict["admin"] = admin
-            Notif.send_email(APP_NAME, subject, admin.email, template_src, context_dict=context_dict)
+            Notif.send_email("GESTION STOCK", subject, admin.email,
+                             template_src, context_dict=context_dict)

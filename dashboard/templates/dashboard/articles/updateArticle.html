@@ -1,0 +1,25 @@
+{% extends 'dashboard/base.html' %}
+
+{% block content %}
+<div class="container">
+    <h1>Modifier article</h1>
+
+    <div class="card border-0">
+        <div class="card-body">
+
+            <form class="p-1" action="{% url 'update-article' pk=produit_id %}" method='POST'>
+                {% csrf_token %}
+                <input type="hidden" name="produit_id" value="{{ produit_id }}">
+                <div class="form-group">{{ Produit_form }}</div>
+            
+                <button type="submit" class="btn btn-primary">Enregistrer</button>
+            
+         
+        </form>
+        </div>
+    </div>
+     
+
+</div> 
+
+{% endblock content %}

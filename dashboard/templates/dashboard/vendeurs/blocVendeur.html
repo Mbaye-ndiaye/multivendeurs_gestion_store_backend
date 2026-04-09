@@ -1,0 +1,20 @@
+{% extends 'dashboard/base.html' %}
+
+{% block content %}
+
+<div class="container">
+
+    <div class="row">
+      <div class="col-md-6">
+      <div class="card card-body">
+          <p>Etes vous sûr de vouloir blocker {{ vendeur }} ? </p>
+          <form action="{% url 'block-vendeur' vendeur.id %}" method="post">
+          {% csrf_token %}
+          <a href="{% url 'vendeurs' %}"  type="button" class="btn btn-outline-primary">Annulé</a>
+          <input class="btn btn-outline-danger" type="submit" value="Confirmé">
+      </form>
+      </div>
+      </div>
+    </div>
+</div>
+{% endblock  %}

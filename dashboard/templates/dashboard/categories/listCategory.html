@@ -1,0 +1,50 @@
+{% extends 'dashboard/base.html' %}
+
+
+{% block content %}
+<div class="row">
+    <div class="d-flex justify-content-around">
+
+        <h1 class="mr-5">Liste des catégories
+        </h1>
+        {% comment %} <a href="{% url 'add-category' %}" class="btn btn-primary btn-lg">Ajouter une Catégorie</a> {% endcomment %}
+    </div>
+    <table class="table table-striped mt-4">
+        <thead>
+          <tr>
+            <th scope="col">#ID</th>
+            <th scope="col">Nom</th>
+            <th scope="col">Déscription</th>
+            {% comment %} <th scope="col">images</th> {% endcomment %}
+            <th scope="col">Vendeur</th>
+            <th scope="col">Modifié</th>
+            <th scope="col">Suppn
+              rimé</th>
+          </tr>
+        </thead>
+        <tbody>
+            {% for category in categories  %}
+            
+            <tr>
+            
+            <td>{{category.id}}</td>
+            <td>{{category.nom}}</td>
+            <td>{{category.description}}</td>
+            
+            <td>{{category.vendeur}}</td>
+            <td>
+              <a href="{% url 'update-category' category.id %}" class="p-4"><i class="fas fa-edit text-primary"></i></a>
+
+            </td>
+            <td class="text-center">
+              <a href="{% url 'delete-category' category.id %}"><i class="fas fa-trash text-danger"></i></a>
+            </td> 
+
+        </tr>
+            {% endfor %}
+
+        </tbody>
+      </table>
+</div>
+{% endblock content %}
+

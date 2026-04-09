@@ -1,0 +1,66 @@
+{% extends 'dashboard/base.html' %}
+
+{% block content %}
+<div class="row">
+    <div class="d-flex justify-content-around">
+        <h1 class="mr-5">Vendeur {{vendeur.prenom}} {{vendeur.nom}}
+            </h1>
+    </div>
+    <table class="table table-striped mt-4">
+        <thead>
+          <tr>
+            <th scope="col">Status</th>
+            <!-- <th scope="col">Nom</th>
+            
+            <th scope="col">Email</th> -->
+            <th scope="col">Boutique</th>
+            <th scope="col">Couleur</th>
+            <th scope="col">Clé</th>
+            <th scope="col">Domaine</th>
+            <th scope="col">Action</th>
+            
+            
+          </tr>
+        </thead>
+        <tbody>
+            
+            
+            <tr>
+            {% if vendeur.is_active %}
+              <td class="text-success">Actif</td>
+            {% else %}
+              <td class="text-danger">Inactif</td>
+            {% endif %}
+            <!-- <td>{{vendeur.prenom}} {{vendeur.nom}}</td>
+            <td>{{vendeur.email}}</td> -->
+            <td>{{vendeur.nom_de_la_boutique}}</td>
+            <td class="text-align-center">
+                <!-- <div style="width: 20px; height: 20px; border-radius: 50%; background-color: {{ vendeur.couleur }}"></div> -->
+            </td>
+            <!-- <td><button type="" style="border: none; background: none;" data-container="body" data-toggle="popover" data-placement="top" data-content="{{vendeur.api_key}}" > -->
+              <i class="fas fa-eye"></i>
+            </button></td>
+            <td>{{vendeur.domaine}}</td>
+            {% if vendeur.is_active %}
+            <!-- <td>
+              <a href="{% url 'block-vendeur' vendeur.id %}"><i class="fas fa-ban text-danger"></i></a>
+            </td>
+            {% else %}
+            <td>
+              <a href="{% url 'unblock-vendeur' vendeur.id %}"><i class="fas fa-lock-open text-success"></i></a>
+            </td>
+            {% endif %}
+            <td> -->
+            <td>
+              <a href="{% url 'update-vendeur' vendeur.id %}" class="p-2" ><i class="fas fa-edit text-primary"></i></a>
+              <a href="{% url 'delete-vendeur' vendeur.id %}" ><i class="fas fa-trash text-danger"></i></a>
+            </td>
+          </tr>
+          
+        </tbody>
+      </table> 
+</div>
+{% endblock %}
+
+
+      

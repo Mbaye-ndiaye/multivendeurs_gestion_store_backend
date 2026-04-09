@@ -1,7 +1,8 @@
 {% load math_filters %}
 {% load custom_filters %}
+
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -15,6 +16,7 @@
         .invoice-container {
             max-width: 800px;
             margin: 0 auto;
+            /* border: 1px solid #ccc; */
             padding: 20px;
             border-radius: 8px;
         }
@@ -45,6 +47,7 @@
         .dates {
             margin-top: 20%;
             width: 100%;
+            /* text-align: right; Align text to the right */
         }
         .table {
             width: 100%;
@@ -85,37 +88,58 @@
 </head>
 <body>
     <div class="invoice-container">
-        {% if facture.paid_statut == "payée" %}
-            <div style="color: green;font-weight: bold;text-align: right;text-transform: uppercase;">
-                {{ facture.paid_statut }}
+        {% if item.order.paid_statut == "payée" %}
+            <div style="color: green;font-weight: bold;text-align: right;text-transform: uppercase;"> 
+                {{item.order.paid_statut}}
             </div>
-        {% elif facture.paid_statut == "non payée" %}
-        <div style="color: red;font-weight: bold;text-align: right;text-transform: uppercase;">
-            {{ facture.paid_statut }}
+        {% elif item.order.paid_statut == "non payée" %}
+        <div style="color: red;font-weight: bold;text-align: right;text-transform: uppercase;"> 
+            {{item.order.paid_statut}}
         </div>
         {% else %}
-            <div style="color: orange;font-weight: bold;text-align: right;text-transform: uppercase;">
-                {{ facture.paid_statut }}
+            <div style="color: orange;font-weight: bold;text-align: right;text-transform: uppercase;"> 
+                {{item.order.paid_statut}}
             </div>
         {% endif %}
         <div class="flex-container">
             <div class="fact-info">
-                {% if logo_data %}
-                <img src="{{ logo_data }}" alt="{{ facture.vendeur.nom_de_la_boutique }}" class="logo">
-                {% endif %}
-                <h2>{{ facture.reference }}</h2>
-                <h3>{{ facture.vendeur.nom_de_la_boutique }}</h3>
-                <p>{{ facture.vendeur.adresse|default:"" }}</p>
+                <img src="{{logo_data}}" alt="{{item.order.vendeur.nom_de_la_boutique}}" class="logo">
+                <h2>{{item.numero}}</h2>
+                <h3>{{item.order.vendeur.nom_de_la_boutique}}</h3>
+                <p>{{item.order.vendeur.adresse}}</p>
             </div>
             <div>
                 <div class="client-info">
                     <h3>Destinataire</h3>
-                    <p>{{ facture.client_nom }}</p>
-                    <p>{{ facture.client_telephone }}</p>
+                    <p>
+                        {% if item.order.user %}
+                            {{item.order.user.prenom}} {{item.order.user.nom}}
+                        {% else  %}
+                            {{item.order.prenom_client}} {{item.order.nom_client}}
+                        {% endif %}
+                    </p>
+                    <p>{% if item.order.user %}
+                            {{item.order.user.email}}
+                        {% elif item.order.email_client %}
+                            {{item.order.email_client}}
+                        {% else %}
+                            Non renseigné
+                        {% endif %}
+                    </p>
+                    <p>{% if item.order.user %}
+                            {{item.order.user.telephone}}
+                        {% elif item.order.telphone_client %}
+                            {{item.order.telphone_client}}
+                        {% elif item.order.telephone %}
+                            {{item.order.telephone}}
+                        {% else %}
+                            Non renseigné
+                        {% endif %}
+                    </p>
                 </div>
                 <div class="dates">
-                    <p><strong>Date de facture :</strong> {{ date_facture }}</p>
-                    <p><strong>Date d'échéance :</strong> {{ date_echeance }}</p>
+                    <p><strong>Date de facture :</strong> {{date_facture}}</p>
+                    <p><strong>Date d’échéance :</strong> {{date_echeance}}</p>
                 </div>
             </div>
         </div>
@@ -130,16 +154,20 @@
                 </tr>
             </thead>
             <tbody>
-            {% for ligne in facture.lignes.all %}
+            {% for order_item in item.order.produits.all %}
                 <tr>
-                    <td>{{ ligne.id }}</td>
-                    <td>{{ ligne.designation }}</td>
-                    <td>{{ ligne.quantite | afficher_quantite }}</td>
+                    <td>{{order_item.id}}</td>
+                    <td>{{order_item.produit.nom}}</td>
+                    <td>{{order_item.quantite | afficher_quantite }}</td>
                     <td>
-                        {{ ligne.prix_unitaire | afficher_quantite }}
-                        {% if facture.vendeur.devise == "EUR" %} € {% else %} {{ facture.vendeur.devise }} {% endif %}
-                    </td>
-                    <td>{{ ligne.prix_total | afficher_quantite }} {% if facture.vendeur.devise == "EUR" %} € {% else %} {{ facture.vendeur.devise }} {% endif %}</td>
+                        {% if order_item.produit.promotion %}
+                            {{ order_item.produit.prix_avec_promo | afficher_quantite }} 
+                        {% else %}
+                            {{ order_item.produit.prix | afficher_quantite }} </h4>
+                        {% endif %}
+                        {% if item.order.vendeur.devise == "EUR" %} € {% else %} {{ item.order.vendeur.devise }} {% endif %}
+                     </td>
+                    <td>{{order_item.total_price |afficher_quantite}} {% if item.order.vendeur.devise == "EUR" %} € {% else %} {{ item.order.vendeur.devise }} {% endif %} </td>
                 </tr>
             {% endfor %}
             </tbody>
@@ -148,38 +176,44 @@
         <table class="table totals details-fact">
             <tr>
                 <td class="total-label">Remise</td>
-                <td>{{ facture.remise | afficher_quantite }} {% if facture.vendeur.devise == "EUR" %} € {% else %} {{ facture.vendeur.devise }} {% endif %}</td>
+                <td>{{item.order.remise |afficher_quantite }} {% if item.order.vendeur.devise == "EUR" %} € {% else %} {{ item.order.vendeur.devise }} {% endif %}</td>
             </tr>
             <tr>
                 <td class="total-label">TOTAL TTC</td>
-                <td>{{ facture.montant_total_apres_remise | afficher_quantite }} {% if facture.vendeur.devise == "EUR" %} € {% else %} {{ facture.vendeur.devise }} {% endif %}</td>
+                <td>{{item.order.montant_total_apres_remise |afficher_quantite}} {% if item.order.vendeur.devise == "EUR" %} € {% else %} {{ item.order.vendeur.devise }} {% endif %}</td>
             </tr>
             <tr>
                 <td class="total-label">Total payé</td>
                 <td>
-                    {% if facture.paid_statut == "payée" %}
-                        {{ facture.montant_total_apres_remise | afficher_quantite }} {% if facture.vendeur.devise == "EUR" %} € {% else %} {{ facture.vendeur.devise }} {% endif %}
+                    {% if item.order.reglements.exists %}
+                        {% with last_reglement=item.order.reglements.last %}
+                            {{ item.order.montant_total_apres_remise|subtract:last_reglement.reste_a_payer |afficher_quantite }} {% if item.order.vendeur.devise == "EUR" %} € {% else %} {{ item.order.vendeur.devise }} {% endif %}
+                        {% endwith %}
+                    {% elif item.order.paid_statut == "payée" %}
+                        {{ item.order.montant_total_apres_remise |afficher_quantite }} {% if item.order.vendeur.devise == "EUR" %} € {% else %} {{ item.order.vendeur.devise }} {% endif %}
                     {% else %}
-                        0 {% if facture.vendeur.devise == "EUR" %} € {% else %} {{ facture.vendeur.devise }} {% endif %}
+                        0 {% if item.order.vendeur.devise == "EUR" %} € {% else %} {{ item.order.vendeur.devise }} {% endif %}
                     {% endif %}
                 </td>
             </tr>
             <tr>
                 <td class="total-label">Solde à payer</td>
                 <td>
-                    {% if facture.paid_statut == "payée" %}
-                        0 {% if facture.vendeur.devise == "EUR" %} € {% else %} {{ facture.vendeur.devise }} {% endif %}
+                    {% if item.order.reglements.exists %}
+                        {% with last_reglement=item.order.reglements.last %}
+                            {{ last_reglement.reste_a_payer |afficher_quantite }} {% if item.order.vendeur.devise == "EUR" %} € {% else %} {{ item.order.vendeur.devise }} {% endif %}
+                        {% endwith %}
+                    {% elif item.order.paid_statut == "payée" %}
+                        0 {% if item.order.vendeur.devise == "EUR" %} € {% else %} {{ item.order.vendeur.devise }} {% endif %}
                     {% else %}
-                        {{ facture.montant_total_apres_remise | afficher_quantite }} {% if facture.vendeur.devise == "EUR" %} € {% else %} {{ facture.vendeur.devise }} {% endif %}
+                        {{ item.order.montant_total_apres_remise|subtract:0 |afficher_quantite}}  {% if item.order.vendeur.devise == "EUR" %} € {% else %} {{ item.order.vendeur.devise }} {% endif %}
                     {% endif %}
                 </td>
             </tr>
         </table>
         <div class="signature-section">
             <p>Signature</p>
-            {% if signature_data %}
-            <img src="{{ signature_data }}" alt="">
-            {% endif %}
+            <img src="{{signature_data}}" alt="">
         </div>
     </div>
 </body>

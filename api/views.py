@@ -43,6 +43,37 @@ class TranslatedErrorResponse(Response):
                          template_name=template_name, headers=headers, content_type=content_type)
 
 
+class VendeurRegisterAPIListView(LoggingMixin, generics.CreateAPIView):
+    """
+    POST api/vendeurs/
+    """
+    queryset = User.objects.all()
+    serializer_class = VendeurRegisterSerializer
+    permission_classes = ()
+
+    def post(self, request, format=None):
+        self.data = request.data.copy()
+        pwo = PassGen(minlen=8, minuc=1, minlc=1, minnum=1, minsc=1)
+        password = pwo.generate()
+        self.data['password'] = password
+
+        serializer = VendeurRegisterSerializer(data=self.data)
+        if serializer.is_valid():
+            serializer.save()
+            item = Vendeur.objects.get(id=serializer.data['id'])
+            item.save()
+
+            # Envoyer l'email avec les identifiants
+            try:
+                send_vendeur_credentials(item.email, password, item.nom_de_la_boutique or 'votre boutique')
+            except Exception as e:
+                logger.error(f"Erreur lors de l'envoi de l'email au vendeur {item.email}: {e}")
+
+            return Response(serializer.data, status=201)
+
+        return Response(serializer.errors, status=400)
+
+
 class LoginView(LoggingMixin, generics.CreateAPIView):
     permission_classes = (
 

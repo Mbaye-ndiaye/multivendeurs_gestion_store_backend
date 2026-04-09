@@ -1,0 +1,17 @@
+<!-- dashboard/vendeurs/deleteVendeur.html -->
+
+{% extends "dashboard/base.html" %} {% load static %} 
+
+{% block content %}
+  <div class="container mt-5">
+    <h2>Confirmation de suppression</h2>
+    <p>Vous êtes sur le point de supprimer le vendeur {{ vendeur.nom }}. Cette action est irréversible.</p>
+    
+    <form method="post" action="{% url 'delete-vendeur' vendeur.id %}">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-danger">Confirmer la suppression</button>
+    </form>
+
+    <a href="{% url 'vendeurs' %}" class="btn btn-secondary mt-2">Annuler</a>
+  </div>
+{% endblock %}

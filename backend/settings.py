@@ -26,7 +26,6 @@ SECRET_KEY = os.environ.get("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
-
 # ALLOWED_HOSTS = ["multivendeurs-gestion-store-backend.onrender.com", "*"]
 ALLOWED_HOSTS = ["*"]
 
@@ -241,4 +240,4 @@ EMAIL_USE_SSL = False
 EMAIL_TIMEOUT = 20
 EMAIL_SSL_KEYFILE = None
 EMAIL_SSL_CERTFILE = None
-APP_NAME = os.environ.get('APP_NAME', 'EASY MARKET')
+APP_NAME = os.environ.get('APP_NAME', 'GESTION STOCK')

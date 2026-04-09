@@ -1,0 +1,85 @@
+<!-- {% extends 'dashboard/base.html' %}
+
+
+{% block content %}
+
+<form method="GET">
+  <div class="form-group">
+      <label for="vendeur">Filtrer par vendeur :</label>
+      <select class="form-control" id="vendeur" name="vendeur">
+          <option value="">Tous les vendeurs</option>
+          {% for vendeur in vendeurs %}
+              <option value="{{ vendeur.id }}">{{ vendeur.nom }}</option>
+          {% endfor %}
+      </select>
+  </div>
+  
+  <!-- NOUVEAU: Filtre par statut de commande -->
+  <div class="form-group">
+      <label for="statut">Filtrer par statut :</label>
+      <select class="form-control" id="statut" name="statut">
+          <option value="">Tous les statuts</option>
+          {% for statut in statuts_disponibles %}
+              <option value="{{ statut }}" {% if statut == statut_selectionne %}selected{% endif %}>
+                  {{ statut|lower|title }}
+              </option>
+          {% endfor %}
+      </select>
+  </div>
+  
+  <button type="submit" class="btn btn-primary">Filtrer</button>
+</form>
+
+<div class="row">
+    <div class="d-flex justify-content-around">
+
+        <h1 class="mr-5">Liste des commandes
+        </h1>
+        {% comment %} <a href="{% url 'add-category' %}" class="btn btn-primary btn-lg">Ajouter category</a> {% endcomment %}
+    </div>
+    <table class="table table-striped mt-4">
+        <thead>
+          <tr>
+            <th scope="col">#Code</th>
+            <th scope="col">Date de Commande</th>
+            <th scope="col">Client</th>
+            <!-- <th scope="col">Produit</th> -->
+            <th scope="col">Vendeur</th>
+            <th scope="col">Statut</th>
+            <!-- <th scope="col">Payment</th> -->
+            {% comment %} <th scope="col">Images</th> {% endcomment %}
+            {% comment %} <th scope="col">userId</th> {% endcomment %}
+            {% comment %} <th>Actions</th> {% endcomment %}
+          </tr>
+        </thead>
+        <tbody>
+            <!-- {% for commandes in orders  %} -->
+            
+            <tr>
+            
+            <!-- <td>{{commandes.code_commande}}</td>
+            <td>{{commandes.created_at}}</td>
+            <td>{{commandes.user.prenom}} {{commandes.user.nom}}</td> -->
+            
+            <!-- <td>{{commandes.produit.id}}</td> -->
+            <!-- <td>{{commandes.vendeur.prenom}} {{commandes.vendeur.nom}}</td> -->
+            
+            <!-- <td>{{ commandes.statut|lower|title }}</td> -->
+            <!-- <td>{{commandes.devise}}</td> -->
+            {% comment %} 
+            <td>
+              <a href="{% url 'update-category' category.id %}" class="p-4"><i class="fas fa-edit text-primary"></i></a>
+
+            </td>
+            <td class="text-center">
+              <a href="{% url 'delete-category' category.id %}"><i class="fas fa-trash text-danger"></i></a>
+            </td>  {% endcomment %}
+
+        </tr>
+            {% endfor %}
+
+        </tbody>
+      </table>
+</div>
+{% endblock content %}
+ -->

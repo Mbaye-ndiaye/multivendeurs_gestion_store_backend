@@ -1,0 +1,23 @@
+{% extends 'dashboard/base.html' %}
+
+{% block content %}
+<div class="container">
+    <h1>Modifier le catégorie {{category.nom}}</h1>
+
+    <div class="card border-0">
+        <div class="card-body">
+
+            <form class="p-5" action="{%  url 'update-category' pk=categorie_id %}" method='POST'>
+                {% csrf_token %}
+                <input type="hidden" name="categorie_id" value="{{ categorie_id }}">
+                <div class="form-group">{{ categorie_form }}</div>
+            
+                <button type="submit" class="btn btn-primary">Enregistrer</button>
+            
+         
+        </form>
+        </div>
+    </div>
+</div> 
+
+{% endblock content %}
