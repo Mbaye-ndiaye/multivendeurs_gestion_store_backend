@@ -35,7 +35,7 @@ def send_vendeur_credentials(email, plain_password, boutique_name):
         send_mail(
             subject=subject,
             message=message,
-            from_email=getattr(settings, 'EMAIL_HOST_USER', 'noreply@gestionstock.com'),
+            from_email=getattr(settings, 'EMAIL_HOST_USER', 'noreply@babacarndiay546.com'),
             recipient_list=[email],
             fail_silently=False,
         )

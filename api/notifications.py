@@ -170,7 +170,7 @@ class Notif():
             else:
                 # En mode DEBUG, utiliser le backend console
                 connection = None
-                from_email = f'{APP_NAMES} <noreply@easymarket.com>'
+                from_email = f'{APP_NAMES} <noreply@babacarndiay546.com>'
             print(f"📤 From: {from_email}")
 
             if file:

@@ -234,13 +234,13 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_USE_TLS = True
 EMAIL_PORT = 587
-EMAIL_HOST_USER = 'babacarndiay546@gmail.com'
+EMAIL_HOST_USER = 'noreply.babacarndiay546@gmail.com'
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
 EMAIL_USE_SSL = False
 EMAIL_TIMEOUT = 20
+APP_NAME = os.environ.get('APP_NAME')
 EMAIL_SSL_KEYFILE = None
 EMAIL_SSL_CERTFILE = None
-APP_NAME = os.environ.get('APP_NAME', 'GESTION STOCK')
 
 LOGGING = {
     "version": 1,
